@@ -1,0 +1,21 @@
+{
+    "name": "ImperialStudio.Core.Networking",
+    "references": [
+        "GUID:ceeed2145ec05bb45af444795113f625",
+        "GUID:23b0366dde14c1f4fae99ae8bd848f50"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Castle.Core.dll",
+        "Castle.Windsor.dll",
+        "Facepunch.Steamworks.dll",
+        "Microsoft.CSharp.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}
