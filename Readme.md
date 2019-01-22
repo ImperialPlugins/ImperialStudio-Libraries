@@ -8,3 +8,4 @@ All rights reserved (c) 2019 Enes Sadık Özbek. The published source code is fo
 * Castle.Windsor
 * Castle.Core
 * ENet-CSharp
+* Facepunch.Steamworks
