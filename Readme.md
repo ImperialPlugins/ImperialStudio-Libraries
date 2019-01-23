@@ -17,3 +17,4 @@ All other published source code is for educational purposes only and may not be 
 * Castle.Core
 * ENet-CSharp
 * Facepunch.Steamworks
+* NetStack

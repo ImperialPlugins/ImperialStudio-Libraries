@@ -1,8 +1,6 @@
 {
     "name": "ImperialStudio.Core",
-    "references": [
-        "GUID:ceeed2145ec05bb45af444795113f625"
-    ],
+    "references": [],
     "optionalUnityReferences": [],
     "includePlatforms": [],
     "excludePlatforms": [],

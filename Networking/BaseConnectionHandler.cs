@@ -5,11 +5,14 @@ using ImperialStudio.Core.Eventing;
 using ImperialStudio.Core.Events;
 using ImperialStudio.Core.Game;
 using ImperialStudio.Core.Logging;
+using ImperialStudio.Core.Networking.Packets;
+using ImperialStudio.Core.Networking.Packets.Handlers;
+using ImperialStudio.Core.Networking.Packets.Serialization;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Threading;
-using ImperialStudio.Core.Networking.Packets;
-using ImperialStudio.Core.Steam;
 using UnityEngine;
 using EventType = ENet.EventType;
 using ILogger = ImperialStudio.Core.Logging.ILogger;
@@ -17,9 +20,10 @@ using Object = UnityEngine.Object;
 
 namespace ImperialStudio.Core.Networking
 {
-    public class BaseConnectionHandler : IConnectionHandler
+    public abstract class BaseConnectionHandler : IConnectionHandler
     {
         private readonly Queue<OutgoingPacket> m_OutgoingQueue;
+        private readonly Dictionary<ulong, Peer> m_AuthenticatedPeers;
 
         public bool IsListening { get; private set; }
         protected Host m_Host { get; private set; }
@@ -28,19 +32,35 @@ namespace ImperialStudio.Core.Networking
         private PacketProcessorComponent m_PacketProcessor;
         private volatile bool m_Flush;
 
+        private readonly IPacketSerializer m_PacketSerializer;
         private readonly ILogger m_Logger;
         private readonly IWindsorContainer m_Container;
 
-        public BaseConnectionHandler(ILogger logger, IEventBus eventBus, IWindsorContainer container)
+        protected BaseConnectionHandler(IPacketSerializer packetSerializer, ILogger logger, IEventBus eventBus, IWindsorContainer container)
         {
             eventBus.Subscribe<ApplicationQuitEvent>(this, (s, e) => { Dispose(); });
 
+            m_PacketSerializer = packetSerializer;
             m_Logger = logger;
             m_Container = container;
             m_OutgoingQueue = new Queue<OutgoingPacket>();
+            m_AuthenticatedPeers = new Dictionary<ulong, Peer>();
         }
 
-        public void EnqueueOutgoing(OutgoingPacket packet)
+        public void Send(Peer peer, IPacket packet)
+        {
+            byte[] packetData = m_PacketSerializer.Serialize(packet);
+
+            var packetType = packet.GetPacketType();
+            Send(new OutgoingPacket
+            {
+                Data = packetData,
+                PacketType = packetType,
+                Peers = new[] { peer }
+            });
+        }
+
+        public void Send(OutgoingPacket packet)
         {
             m_OutgoingQueue.Enqueue(packet);
         }
@@ -67,9 +87,18 @@ namespace ImperialStudio.Core.Networking
                     var outgoingPacket = m_OutgoingQueue.Dequeue();
                     foreach (var peer in outgoingPacket.Peers)
                     {
-                        var packet = outgoingPacket.Packet;
-                        peer.Send(outgoingPacket.ChannelId, ref packet);
+                        Packet packet = default;
 
+                        MemoryStream ms = new MemoryStream();
+                        ms.WriteByte((byte)outgoingPacket.PacketType);
+                        ms.Write(outgoingPacket.Data, 0, outgoingPacket.Data.Length);
+
+                        packet.Create(ms.ToArray());
+                        ms.Dispose();
+
+                        var channelId = (byte)outgoingPacket.PacketType.GetPacketDescription().Channel;
+                        peer.Send(channelId, ref packet);
+                        packet.Dispose();
                     }
                 }
 
@@ -92,13 +121,16 @@ namespace ImperialStudio.Core.Networking
             m_Host?.Dispose();
             m_Host = null;
 
-            if (waitForQueue)
+            if (m_PacketProcessor != null)
             {
-                m_PacketProcessor.DestroyAfterQueue();
-            }
-            else
-            {
-                Object.Destroy(m_PacketProcessor.gameObject);
+                if (waitForQueue)
+                {
+                    m_PacketProcessor.DestroyAfterQueue();
+                }
+                else
+                {
+                    Object.Destroy(m_PacketProcessor.gameObject);
+                }
             }
         }
 
@@ -131,6 +163,39 @@ namespace ImperialStudio.Core.Networking
                 return;
 
             Shutdown(false);
+        }
+
+        public bool IsAuthenticated(Peer peer)
+        {
+            return m_AuthenticatedPeers.Any(d => d.Value.ID == peer.ID);
+        }
+
+        public void Authenticate(Peer peer, ulong steamId)
+        {
+            if (m_AuthenticatedPeers.ContainsKey(steamId))
+            {
+                throw new Exception("Peer is already verified: " + steamId);
+            }
+
+            m_AuthenticatedPeers.Add(steamId, peer);
+        }
+
+        public void Unauthenticate(Peer peer)
+        {
+            ulong steamId = 0;
+
+            foreach (var pair in m_AuthenticatedPeers)
+            {
+                if (pair.Value.ID == peer.ID)
+                {
+                    steamId = pair.Key;
+                }
+            }
+
+            if (steamId != 0)
+            {
+                m_AuthenticatedPeers.Remove(steamId);
+            }
         }
     }
 }

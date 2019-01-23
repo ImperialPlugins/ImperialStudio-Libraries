@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
-using ImperialStudio.Core.DependencyInjection;
+﻿using ImperialStudio.Core.DependencyInjection;
+using ImperialStudio.Core.Eventing;
 using ImperialStudio.Core.Logging;
+using ImperialStudio.Core.Networking.Events;
+using NetStack.Threading;
 using UnityEngine;
 using Event = ENet.Event;
 using ILogger = ImperialStudio.Core.Logging.ILogger;
@@ -9,12 +11,12 @@ namespace ImperialStudio.Core.Networking.Packets
 {
     public sealed class PacketProcessorComponent : MonoBehaviour
     {
-        private Queue<Event> m_EventQueue;
+        private ConcurrentBuffer m_EventQueue;
 
         private void Awake()
         {
             DontDestroyOnLoad(gameObject);
-            m_EventQueue = new Queue<Event>();
+            m_EventQueue = new ConcurrentBuffer(8192);
         }
 
         [AutoInject]
@@ -25,6 +27,9 @@ namespace ImperialStudio.Core.Networking.Packets
 
         [AutoInject]
         private INetworkEventProcessor m_EventProcessor;
+
+        [AutoInject]
+        private IEventBus m_EventBus;
 
         private bool m_Disposing;
 
@@ -49,8 +54,14 @@ namespace ImperialStudio.Core.Networking.Packets
 
             while (m_EventQueue.Count > 0)
             {
-                var @event = m_EventQueue.Dequeue();
+                var @event = (Event) m_EventQueue.Dequeue();
                 m_Logger.LogInformation("Processing network event: " + @event.Type);
+
+                NetworkEvent networkEvent = new NetworkEvent(@event);
+                m_EventBus.Emit(this, networkEvent);
+
+                if (networkEvent.IsCancelled)
+                    continue;
 
                 m_EventProcessor.ProcessEvent(@event);
             }

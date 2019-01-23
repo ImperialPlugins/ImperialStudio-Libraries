@@ -1,22 +1,38 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using ImperialStudio.Core.Networking.Packets.Handlers;
 
 namespace ImperialStudio.Core.Networking.Packets
 {
     public static class PacketExtensions
     {
-        private static readonly Dictionary<EPacket, PacketAttribute> m_AttributeCache = new Dictionary<EPacket, PacketAttribute>();
-        public static PacketAttribute GetInfo(this EPacket packet)
+        private static readonly Dictionary<PacketType, PacketDescriptionAttribute> m_PacketDescriptionAttributeCache = new Dictionary<PacketType, PacketDescriptionAttribute>();
+        public static PacketDescriptionAttribute GetPacketDescription(this PacketType packetType)
         {
-            if (!m_AttributeCache.ContainsKey(packet))
+            if (!m_PacketDescriptionAttributeCache.ContainsKey(packetType))
             {
-                var type = typeof(EPacket);
-                var memInfo = type.GetMember(packet.ToString());
-                var attribute = (PacketAttribute)memInfo[0].GetCustomAttributes(typeof(PacketAttribute), false).First();
-                m_AttributeCache.Add(packet, attribute);
+                var type = typeof(PacketType);
+                var memInfo = type.GetMember(packetType.ToString());
+                var attribute = (PacketDescriptionAttribute)memInfo[0].GetCustomAttributes(typeof(PacketDescriptionAttribute), false).First();
+                m_PacketDescriptionAttributeCache.Add(packetType, attribute);
             }
 
-            return m_AttributeCache[packet];
+            return m_PacketDescriptionAttributeCache[packetType];
+        }
+
+        private static readonly Dictionary<Type, PacketTypeAttribute> m_PacketTypeAttributeCache = new Dictionary<Type, PacketTypeAttribute>();
+        public static PacketType GetPacketType(this IPacket packet)
+        {
+            var type = packet.GetType();
+
+            if (!m_PacketTypeAttributeCache.ContainsKey(type))
+            {
+                var attribute = (PacketTypeAttribute)type.GetCustomAttributes(typeof(PacketTypeAttribute), false).First();
+                m_PacketTypeAttributeCache.Add(type, attribute);
+            }
+
+            return m_PacketTypeAttributeCache[type].PacketType;
         }
     }
 }

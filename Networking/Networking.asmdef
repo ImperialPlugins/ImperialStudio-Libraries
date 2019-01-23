@@ -2,7 +2,8 @@
     "name": "ImperialStudio.Core.Networking",
     "references": [
         "GUID:ceeed2145ec05bb45af444795113f625",
-        "GUID:23b0366dde14c1f4fae99ae8bd848f50"
+        "GUID:23b0366dde14c1f4fae99ae8bd848f50",
+        "GUID:4bf48fd7ef5910741af47e89f830e96e"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],
@@ -13,7 +14,8 @@
         "Castle.Core.dll",
         "Castle.Windsor.dll",
         "Facepunch.Steamworks.dll",
-        "Microsoft.CSharp.dll"
+        "Microsoft.CSharp.dll",
+        "BinarySerializer.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],

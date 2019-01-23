@@ -3,7 +3,7 @@ using ENet;
 using ImperialStudio.Core.Eventing;
 using ImperialStudio.Core.Logging;
 using System;
-using ImperialStudio.Core.Steam;
+using ImperialStudio.Core.Networking.Packets.Serialization;
 using ILogger = ImperialStudio.Core.Logging.ILogger;
 
 namespace ImperialStudio.Core.Networking.Server
@@ -13,7 +13,7 @@ namespace ImperialStudio.Core.Networking.Server
         public string Name { get; private set; }
         public byte MaxPlayers { get; set; }
 
-        public ServerConnectionHandler(ILogger logger, IEventBus eventBus, IWindsorContainer container) : base(logger, eventBus, container)
+        public ServerConnectionHandler(IPacketSerializer packetSerializer, ILogger logger, IEventBus eventBus, IWindsorContainer container) : base(packetSerializer, logger, eventBus, container)
         {
             m_Logger = logger;
         }

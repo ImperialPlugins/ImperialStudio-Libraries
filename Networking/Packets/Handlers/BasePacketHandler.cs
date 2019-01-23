@@ -1,34 +1,143 @@
-﻿using System;
-using ENet;
+﻿using ENet;
 using ImperialStudio.Core.Game;
+using ImperialStudio.Core.Logging;
+using ImperialStudio.Core.Networking.Client;
+using ImperialStudio.Core.Networking.Packets.Serialization;
+using System;
+using System.Linq;
 
 namespace ImperialStudio.Core.Networking.Packets.Handlers
 {
-    public abstract class BasePacketHandler: IPacketHandler
+    public abstract class BasePacketHandler<T> : BasePacketHandler where T : IPacket
     {
-        private readonly IGamePlatformAccessor m_GamePlatformAccessor;
+        private readonly IConnectionHandler m_ConnectionHandler;
 
-        protected BasePacketHandler(IGamePlatformAccessor gamePlatformAccessor)
+        protected sealed override void OnHandleVerifiedPacket(IncomingPacket incomingPacket)
         {
-            m_GamePlatformAccessor = gamePlatformAccessor;
-        }
-
-        public void HandlePacket(Peer peer, EPacket packet, byte[] packetData)
-        {
-            var packetInfo = packet.GetInfo();
-            switch (packetInfo.SenderPlatform)
+            T deserialized;
+            try
             {
-                case GamePlatform.Client | GamePlatform.Server:
-                    // do nothing
-                    break;
-                case GamePlatform.Client when m_GamePlatformAccessor.GamePlatform == GamePlatform.Client:
-                    throw new Exception("Server tried to send a client packet");
-
-                case GamePlatform.Server when m_GamePlatformAccessor.GamePlatform == GamePlatform.Server:
-                    throw new Exception("Client tried to send a server packet");
+                deserialized = PacketSerializer.Deserialize<T>(incomingPacket.Data);
             }
+            catch (Exception ex)
+            {
+                Reject(incomingPacket, "Failed to deserialize: " + ex.Message);
+                return;
+            }
+
+            OnHandleVerifiedPacket(incomingPacket.Peer, deserialized);
         }
 
-        protected abstract void OnHandlePacket(Peer peer, EPacket packet, byte[] packetData);
+        protected BasePacketHandler(
+            IPacketSerializer packetSerializer,
+            IGamePlatformAccessor gamePlatformAccessor,
+            IConnectionHandler connectionHandler,
+            ILogger logger)
+            : base(packetSerializer,
+                gamePlatformAccessor,
+                connectionHandler,
+                logger)
+        {
+            m_ConnectionHandler = connectionHandler;
+        }
+
+        protected abstract void OnHandleVerifiedPacket(Peer sender, T incomingPacket);
+    }
+
+    public abstract class BasePacketHandler : IPacketHandler
+    {
+        protected IPacketSerializer PacketSerializer { get; }
+        public PacketType PacketType { get; }
+
+        private readonly IGamePlatformAccessor m_GamePlatformAccessor;
+        private readonly IConnectionHandler m_ConnectionHandler;
+        private readonly ILogger m_Logger;
+
+        protected BasePacketHandler(IPacketSerializer packetSerializer, IGamePlatformAccessor gamePlatformAccessor,
+            IConnectionHandler connectionHandler,
+            ILogger logger)
+        {
+            PacketSerializer = packetSerializer;
+            PacketType = ((PacketTypeAttribute[])GetType().GetCustomAttributes(typeof(PacketTypeAttribute), false)).First().PacketType;
+            m_GamePlatformAccessor = gamePlatformAccessor;
+            m_ConnectionHandler = connectionHandler;
+            m_Logger = logger;
+        }
+
+        public void HandlePacket(IncomingPacket incomingPacket)
+        {
+            OnVerifyPacket(ref incomingPacket);
+
+            if (incomingPacket.IsVerified)
+                OnHandleVerifiedPacket(incomingPacket);
+        }
+
+        protected virtual void OnVerifyPacket(ref IncomingPacket incomingPacket)
+        {
+            var currentPlatform = m_GamePlatformAccessor.GamePlatform;
+            var packetDescription = incomingPacket.PacketType.GetPacketDescription();
+
+            // Validate channel
+            if (incomingPacket.ChannelId != (byte) packetDescription.Channel)
+            {
+                Reject(incomingPacket, $"Channel mismatch: received: {incomingPacket.ChannelId}, expected: {(byte)packetDescription.Channel}");
+                return;
+            }
+
+            // Validate authentication
+            if (packetDescription.NeedsAuthentication)
+            {
+                bool isAuthenticated = m_ConnectionHandler.IsAuthenticated(incomingPacket.Peer);
+                if (!isAuthenticated)
+                {
+                    Reject(incomingPacket, "Unauthenticated peer");
+                    return;
+                }
+            }
+
+            // Validate packet direction
+            switch (packetDescription.Direction)
+            {
+                case PacketDirection.ClientToServer when currentPlatform == GamePlatform.Client:
+                    {
+                        Reject(incomingPacket, "Server tried to send a client packet");
+                        return;
+                    }
+
+                case PacketDirection.ServerToClient when currentPlatform == GamePlatform.Server:
+                    {
+                        Reject(incomingPacket, "Client tried to send a server packet");
+                        return;
+                    }
+
+                case PacketDirection.ClientToClient:
+                    if (currentPlatform == GamePlatform.Server)
+                    {
+                        Reject(incomingPacket, "Client tried to send a client packet");
+                        return;
+                    }
+
+                    var clientConnectionHandler = (ClientConnectionHandler)m_ConnectionHandler;
+                    if (incomingPacket.Peer.ID == clientConnectionHandler.ServerPeer.ID)
+                    {
+                        Reject(incomingPacket, "Server tried to send a client packet");
+                        return;
+                    }
+
+                    break;
+
+                case PacketDirection.Any:
+                    break;
+            }
+
+            incomingPacket.IsVerified = true;
+        }
+
+        protected void Reject(IncomingPacket incomingPacket, string reason)
+        {
+            m_Logger.LogWarning($"Dropped packet \"{incomingPacket.PacketType.ToString()}\" from peer {incomingPacket.Peer.ID}: {reason}");
+        }
+
+        protected abstract void OnHandleVerifiedPacket(IncomingPacket incomingPacket);
     }
 }
