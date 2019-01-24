@@ -3,9 +3,10 @@ using ImperialStudio.Core.Networking.Packets.Handlers;
 
 namespace ImperialStudio.Core.Networking
 {
-    public interface INetworkEventProcessor
+    public interface INetworkEventHandler
     {
-        void ProcessEvent(Event @event);
+        void ProcessEvent(Event @event, NetworkPeer networkPeer);
         void RegisterPacketHandler<T>() where T : class, IPacketHandler;
+        void EnsureLoaded();
     }
 }

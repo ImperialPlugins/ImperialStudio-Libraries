@@ -10,30 +10,31 @@ using System.IO;
 
 namespace ImperialStudio.Core.Networking
 {
-    public sealed class NetworkEventProcessor : INetworkEventProcessor
+    public sealed class NetworkEventHandler : INetworkEventHandler
     {
         private readonly IWindsorContainer m_Container;
         private readonly ILogger m_Logger;
-        private readonly IConnectionHandler m_ConnectionHandler;
         private readonly Dictionary<PacketType, ICollection<IPacketHandler>> m_PacketHandlers;
-
-        public NetworkEventProcessor(IWindsorContainer container, ILogger logger, IConnectionHandler connectionHandler)
+        private bool m_Inited;
+        public NetworkEventHandler(IWindsorContainer container, ILogger logger)
         {
             m_Container = container;
             m_Logger = logger;
-            m_ConnectionHandler = connectionHandler;
             m_PacketHandlers = new Dictionary<PacketType, ICollection<IPacketHandler>>();
-
-            RegisterPacketHandlers();
         }
 
-        private void RegisterPacketHandlers()
+        public void EnsureLoaded()
         {
+            if (m_Inited)
+                return;
+
             RegisterPacketHandler<AuthenticateHandler>();
             RegisterPacketHandler<AuthenticatedHandler>();
             RegisterPacketHandler<PingHandler>();
             RegisterPacketHandler<PongHandler>();
             RegisterPacketHandler<TerminateHandler>();
+
+            m_Inited = true;
         }
 
         public void RegisterPacketHandler<T>() where T : class, IPacketHandler
@@ -45,17 +46,16 @@ namespace ImperialStudio.Core.Networking
                 m_PacketHandlers.Add(instance.PacketType, new List<IPacketHandler>());
             }
 
-
             m_PacketHandlers[instance.PacketType].Add(instance);
         }
 
-        public void ProcessEvent(Event @event)
+        public void ProcessEvent(Event @event, NetworkPeer networkPeer)
         {
             if (@event.Type == EventType.Receive)
-                HandleReceive(@event);
+                HandleReceive(@event, networkPeer);
         }
 
-        private void HandleReceive(Event @event)
+        private void HandleReceive(Event @event, NetworkPeer networkPeer)
         {
             byte[] buffer = new byte[@event.Packet.Length];
             @event.Packet.CopyTo(buffer);
@@ -70,13 +70,6 @@ namespace ImperialStudio.Core.Networking
                 ms.Read(packetData, 0, packetData.Length);
 
             ms.Dispose();
-
-            NetworkPeer networkPeer = m_ConnectionHandler.GetPeerByNetworkId(@event.Peer.ID);
-            if (networkPeer == null)
-            {
-                throw new Exception($"Failed to handle packet, peer was not found (peer #{@event.Peer.ID}; IsSet: {@event.Peer.IsSet}).");
-            }
-
             HandlePacket(networkPeer, packetType, packetData, @event.ChannelID);
         }
 

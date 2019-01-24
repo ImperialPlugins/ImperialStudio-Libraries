@@ -21,7 +21,7 @@ namespace ImperialStudio.Core.Networking.Server
         public string Name { get; private set; }
         public byte MaxPlayers { get; set; }
 
-        public ServerConnectionHandler(IPacketSerializer packetSerializer, ILogger logger, IEventBus eventBus, IWindsorContainer container) : base(packetSerializer, logger, eventBus, container)
+        public ServerConnectionHandler(IPacketSerializer packetSerializer, INetworkEventHandler networkEventProcessor, ILogger logger, IEventBus eventBus, IWindsorContainer container) : base(packetSerializer, networkEventProcessor, logger, eventBus, container)
         {
             m_EventBus = eventBus;
             m_Logger = logger;

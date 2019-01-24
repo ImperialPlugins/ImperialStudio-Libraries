@@ -5,6 +5,7 @@ using ImperialStudio.Core.Eventing;
 using ImperialStudio.Core.Events;
 using ImperialStudio.Core.Game;
 using ImperialStudio.Core.Logging;
+using ImperialStudio.Core.Networking.Events;
 using ImperialStudio.Core.Networking.Packets;
 using ImperialStudio.Core.Networking.Packets.Handlers;
 using ImperialStudio.Core.Networking.Packets.Serialization;
@@ -14,6 +15,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
+using Event = ENet.Event;
 using EventType = ENet.EventType;
 using ILogger = ImperialStudio.Core.Logging.ILogger;
 using Object = UnityEngine.Object;
@@ -31,18 +33,23 @@ namespace ImperialStudio.Core.Networking
         protected Host m_Host { get; private set; }
 
         private Thread m_NetworkThread;
-        private PacketProcessorComponent m_PacketProcessor;
         private volatile bool m_Flush;
 
+        public bool AutoFlush { get; set; } = true;
+
         private readonly IPacketSerializer m_PacketSerializer;
+        private readonly INetworkEventHandler m_NetworkEventProcessor;
         private readonly ILogger m_Logger;
+        private readonly IEventBus m_EventBus;
         private readonly IWindsorContainer m_Container;
 
-        protected BaseConnectionHandler(IPacketSerializer packetSerializer, ILogger logger, IEventBus eventBus, IWindsorContainer container)
+        protected BaseConnectionHandler(IPacketSerializer packetSerializer, INetworkEventHandler networkEventProcessor, ILogger logger, IEventBus eventBus, IWindsorContainer container)
         {
             eventBus.Subscribe<ApplicationQuitEvent>(this, (s, e) => { Dispose(); });
 
+            m_EventBus = eventBus;
             m_PacketSerializer = packetSerializer;
+            m_NetworkEventProcessor = networkEventProcessor;
             m_Logger = logger;
             m_Container = container;
             m_OutgoingQueue = new Queue<OutgoingPacket>();
@@ -81,14 +88,14 @@ namespace ImperialStudio.Core.Networking
         {
             while (IsListening)
             {
-                m_Host.Service(60, out var netEvent);
-
+                m_Host.Service(1, out var netEvent);
                 if (netEvent.Type != EventType.None)
                 {
 #if LOG_NETWORK
                     m_Logger.LogDebug("Network event: " + netEvent.Type);
 #endif
-                    m_PacketProcessor.EnqueueIncoming(netEvent);
+
+                    HandleIncomingEvent(netEvent);
                 }
 
                 while (m_OutgoingQueue.Count > 0)
@@ -113,14 +120,55 @@ namespace ImperialStudio.Core.Networking
                     }
                 }
 
-                if (m_Flush)
+                if (AutoFlush || m_Flush)
                 {
                     m_Host.Flush();
                     m_Flush = false;
                 }
-
-                Thread.Sleep(20);
             }
+        }
+
+        private void HandleIncomingEvent(Event @event)
+        {
+#if LOG_NETWORK
+            m_Logger.LogDebug("Processing network event: " + @event.Type);
+#endif
+            NetworkPeer networkPeer = null;
+            if (@event.Peer.IsSet)
+            {
+                networkPeer = GetPeerByNetworkId(@event.Peer.ID);
+            }
+
+            switch (@event.Type)
+            {
+                case EventType.Connect:
+                    if (!@event.Peer.IsSet)
+                    {
+#if LOG_NETWORK
+                        m_Logger.LogWarning("Peer was not set in Connect event.");
+#endif
+                    }
+                    else
+                    {
+                        RegisterPeer(new NetworkPeer(@event.Peer));
+                    }
+                    break;
+                case EventType.Timeout:
+                case EventType.Disconnect:
+                    if (networkPeer != null)
+                    {
+                        UnregisterPeer(networkPeer);
+                    }
+                    break;
+            }
+
+            NetworkEvent networkEvent = new NetworkEvent(@event, networkPeer);
+            m_EventBus.Emit(this, networkEvent);
+
+            if (networkEvent.IsCancelled)
+                return;
+
+            m_NetworkEventProcessor.ProcessEvent(@event, networkPeer);
         }
 
         public void Shutdown(bool waitForQueue = true)
@@ -140,17 +188,7 @@ namespace ImperialStudio.Core.Networking
             m_Host?.Dispose();
             m_Host = null;
 
-            if (m_PacketProcessor != null)
-            {
-                if (waitForQueue)
-                {
-                    m_PacketProcessor.DestroyAfterQueue();
-                }
-                else
-                {
-                    Object.Destroy(m_PacketProcessor.gameObject);
-                }
-            }
+            //todo: implement waitForQueue
         }
 
         protected Host GetOrCreateHost()
@@ -167,10 +205,7 @@ namespace ImperialStudio.Core.Networking
 
             IsListening = true;
 
-            var platform = m_Container.Resolve<IGamePlatformAccessor>().GamePlatform;
-
-            GameObject processorObject = new GameObject("PacketProcessor-" + platform);
-            m_PacketProcessor = processorObject.AddComponentWithInjection<PacketProcessorComponent>(m_Container);
+            m_NetworkEventProcessor.EnsureLoaded();
 
             m_NetworkThread = new Thread(NetworkUpdate);
             m_NetworkThread.Start();
@@ -179,7 +214,6 @@ namespace ImperialStudio.Core.Networking
         protected void StopListening()
         {
             IsListening = false;
-            GameObject.Destroy(m_PacketProcessor.gameObject);
         }
 
         public virtual void Dispose()

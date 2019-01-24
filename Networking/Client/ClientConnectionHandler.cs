@@ -14,7 +14,7 @@ namespace ImperialStudio.Core.Networking.Client
 {
     public sealed class ClientConnectionHandler : BaseConnectionHandler
     {
-        public ClientConnectionHandler(IPacketSerializer packetSerializer, ILogger logger, IEventBus eventBus, IWindsorContainer container) : base(packetSerializer, logger, eventBus, container)
+        public ClientConnectionHandler(IPacketSerializer packetSerializer, INetworkEventHandler networkEventProcessor, ILogger logger, IEventBus eventBus, IWindsorContainer container) : base(packetSerializer, networkEventProcessor, logger, eventBus, container)
         {
             m_Logger = logger;
             eventBus.Subscribe<NetworkEvent>(this, HandleNetworkEvent);
