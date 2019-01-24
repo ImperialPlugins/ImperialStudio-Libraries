@@ -2,10 +2,10 @@
 {
     public enum PacketType : byte
     {
-        [PacketDescription(PacketDirection.Any, NetworkChannel.Main)]
+        [PacketDescription(PacketDirection.Any, NetworkChannel.PingPong)]
         Ping,
 
-        [PacketDescription(PacketDirection.Any, NetworkChannel.Main)]
+        [PacketDescription(PacketDirection.Any, NetworkChannel.PingPong)]
         Pong,
 
         [PacketDescription(PacketDirection.ClientToServer, NetworkChannel.Main, false)]
@@ -13,9 +13,6 @@
 
         [PacketDescription(PacketDirection.ServerToClient, NetworkChannel.Main)]
         Authenticated,
-
-        [PacketDescription(PacketDirection.ClientToServer, NetworkChannel.Main)]
-        AuthenticationFail,
 
         [PacketDescription(PacketDirection.ServerToClient, NetworkChannel.Main)]
         MapChange,

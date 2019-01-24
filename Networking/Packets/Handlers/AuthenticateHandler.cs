@@ -1,21 +1,22 @@
-﻿using ENet;
+﻿using System.Collections.Generic;
+using ENet;
 using Facepunch.Steamworks;
 using ImperialStudio.Core.Eventing;
 using ImperialStudio.Core.Game;
 using ImperialStudio.Core.Logging;
 using ImperialStudio.Core.Networking.Events;
 using ImperialStudio.Core.Networking.Packets.Serialization;
+using ImperialStudio.Core.Networking.Server;
 using ImperialStudio.Core.Steam;
-using System.Collections.Generic;
 
 namespace ImperialStudio.Core.Networking.Packets.Handlers
 {
     [PacketType(PacketType.Authenticate)]
     public class AuthenticateHandler : BasePacketHandler<AuthenticatePacket>
     {
-        private readonly IConnectionHandler m_ConnectionHandler;
+        private readonly ServerConnectionHandler m_ServerConnectionHandler;
         private readonly ILogger m_Logger;
-        private readonly Dictionary<ulong, Peer> m_AuthenticationPending = new Dictionary<ulong, Peer>();
+        private readonly Dictionary<ulong, NetworkPeer> m_PendingAuthentications;
 
         public AuthenticateHandler(
             IPacketSerializer packetSerializer,
@@ -24,101 +25,70 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
             IEventBus eventBus,
             ILogger logger) : base(packetSerializer, gamePlatformAccessor, connectionHandler, logger)
         {
-            m_ConnectionHandler = connectionHandler;
+            m_ServerConnectionHandler = connectionHandler as ServerConnectionHandler;
             m_Logger = logger;
-            eventBus.Subscribe<NetworkEvent>(this, HandleNetworkEvent);
+            m_PendingAuthentications = new Dictionary<ulong, NetworkPeer>();
 
             if (gamePlatformAccessor.GamePlatform == GamePlatform.Server)
+            {
+                eventBus.Subscribe<NetworkEvent>(this, HandleNetworkEvent);
                 SteamServerComponent.Instance.Server.Auth.OnAuthChange += OnSteamAuthChange;
+            }
         }
 
         private void OnSteamAuthChange(ulong steamId, ulong ownerSteamId, ServerAuth.Status authSessionResponse)
         {
+            m_Logger.LogDebug($"Authentication result for \"{steamId}\": {authSessionResponse.ToString()}");
+
+            if (!m_PendingAuthentications.ContainsKey(steamId))
             {
-                m_Logger.LogDebug("Authentication result for \"" + steamId + "\": " + authSessionResponse.ToString());
+                return;
+            }
 
-                if (!m_AuthenticationPending.ContainsKey(steamId))
-                {
-                    m_Logger.LogWarning("Authentication failed because peer was not found: \"" + steamId + "\"");
-                    return;
-                }
+            var peer = m_PendingAuthentications[steamId];
+            m_PendingAuthentications.Remove(steamId);
 
-                var peer = m_AuthenticationPending[steamId];
+            if (authSessionResponse != ServerAuth.Status.OK)
+            {
+                if (authSessionResponse != ServerAuth.Status.AuthTicketCanceled)
+                    m_Logger.LogWarning($"Authentication failed for {peer.Name}: {authSessionResponse.ToString()}");
 
-                if (authSessionResponse != ServerAuth.Status.OK)
-                {
-                    m_AuthenticationPending.Remove(steamId);
-                    m_Logger.LogWarning("Authentication failed for  peer \"" + steamId + "\": " + authSessionResponse.ToString());
-                    peer.DisconnectNow(0); //todo: send proper disconnect packet
-                    return;
-                }
+                m_ServerConnectionHandler.Disconnect(peer, authSessionResponse);
+                return;
+            }
 
-                m_ConnectionHandler.Send(new OutgoingPacket
-                {
-                    PacketType = PacketType.Authenticated,
-                    Data = new byte[0],
-                    Peers = new[] { peer }
-                });
-            };
+            peer.SteamId = steamId;
+            m_ServerConnectionHandler.Send(new OutgoingPacket
+            {
+                PacketType = PacketType.Authenticated,
+                Data = new byte[0],
+                Peers = new[] { peer }
+            });
         }
 
         private void HandleNetworkEvent(object sender, NetworkEvent @event)
         {
             var enetEvent = @event.EnetEvent;
 
-            ulong steamId = 0;
-
-            foreach (var pair in m_AuthenticationPending)
+            if (enetEvent.Type == EventType.Disconnect || enetEvent.Type == EventType.Timeout)
             {
-                if (pair.Value.ID == enetEvent.Peer.ID)
+                var networkPeer = m_ServerConnectionHandler.GetPeerByNetworkId(enetEvent.Peer.ID);
+
+                if (networkPeer != null)
                 {
-                    steamId = pair.Key;
+                    SteamServerComponent.Instance.Server.Auth.EndSession(networkPeer.SteamId);
                 }
-            }
-
-            if (steamId != 0)
-            {
-                m_AuthenticationPending.Remove(steamId);
-                SteamServerComponent.Instance.Server.Auth.EndSession(steamId);
             }
         }
 
-        protected override void OnHandleVerifiedPacket(Peer sender, AuthenticatePacket incomingPacket)
+        protected override void OnHandleVerifiedPacket(NetworkPeer sender, AuthenticatePacket incomingPacket)
         {
-            ulong steamIdToRemove = 0;
-
-            foreach (var pair in m_AuthenticationPending)
-            {
-                if (pair.Value.ID == sender.ID)
-                {
-                    steamIdToRemove = pair.Key;
-                    break;
-                }
-            }
-
-            if (steamIdToRemove > 0)
-            {
-                m_AuthenticationPending.Remove(steamIdToRemove);
-                // Really needed to cancel connection?
-                sender.Reset();
-                return;
-            }
-
-            if (m_AuthenticationPending.ContainsKey(incomingPacket.SteamId))
-            {
-                sender.Reset();
-                m_AuthenticationPending.Remove(incomingPacket.SteamId);
-                return;
-            }
-
-            m_AuthenticationPending.Add(incomingPacket.SteamId, sender);
             m_Logger.LogDebug("Received authentication request from user: " + incomingPacket.SteamId);
-
+            m_PendingAuthentications.Add(incomingPacket.SteamId, sender);
+        
             if (!SteamServerComponent.Instance.Server.Auth.StartSession(incomingPacket.Ticket, incomingPacket.SteamId))
             {
-                //todo: send auth failed
-                m_Logger.Log("Failed to start authentication session for user: " + incomingPacket.SteamId);
-                return;
+                m_ServerConnectionHandler.Disconnect(sender, "Could not initialize Steam authentication session.");
             }
         }
     }

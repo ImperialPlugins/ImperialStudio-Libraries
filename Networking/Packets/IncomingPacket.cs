@@ -1,13 +1,11 @@
-﻿using ENet;
-
-namespace ImperialStudio.Core.Networking.Packets
+﻿namespace ImperialStudio.Core.Networking.Packets
 {
-    public struct IncomingPacket
+    public sealed class IncomingPacket
     {
-        public Peer Peer { get; set; }
+        public NetworkPeer Peer { get; set; }
         public PacketType PacketType { get; set; }
         public byte[] Data { get; set; }
         public bool IsVerified { get; set; }
-        public byte ChannelId { get; set; }
+        public NetworkChannel Channel { get; set; }
     }
 }

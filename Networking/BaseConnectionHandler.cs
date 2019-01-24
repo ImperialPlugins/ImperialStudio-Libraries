@@ -23,7 +23,7 @@ namespace ImperialStudio.Core.Networking
     public abstract class BaseConnectionHandler : IConnectionHandler
     {
         private readonly Queue<OutgoingPacket> m_OutgoingQueue;
-        private readonly Dictionary<ulong, Peer> m_AuthenticatedPeers;
+        private readonly ICollection<NetworkPeer> m_ConnectedPeers;
 
         public bool IsListening { get; private set; }
         protected Host m_Host { get; private set; }
@@ -44,10 +44,10 @@ namespace ImperialStudio.Core.Networking
             m_Logger = logger;
             m_Container = container;
             m_OutgoingQueue = new Queue<OutgoingPacket>();
-            m_AuthenticatedPeers = new Dictionary<ulong, Peer>();
+            m_ConnectedPeers = new List<NetworkPeer>();
         }
 
-        public void Send(Peer peer, IPacket packet)
+        public void Send(NetworkPeer peer, IPacket packet)
         {
             byte[] packetData = m_PacketSerializer.Serialize(packet);
 
@@ -62,6 +62,11 @@ namespace ImperialStudio.Core.Networking
 
         public void Send(OutgoingPacket packet)
         {
+            if (packet.Peers.Any(d => !d.EnetPeer.IsSet))
+            {
+                throw new Exception("Failed to send packet because it contains invalid peers.");
+            }
+
             m_OutgoingQueue.Enqueue(packet);
         }
 
@@ -74,19 +79,24 @@ namespace ImperialStudio.Core.Networking
         {
             while (IsListening)
             {
-                m_Host.Service(15, out var netEvent);
+                m_Host.Service(60, out var netEvent);
 
                 if (netEvent.Type != EventType.None)
                 {
-                    m_Logger.LogInformation("Network event: " + netEvent.Type);
+#if LOG_NETWORK
+                    m_Logger.LogDebug("Network event: " + netEvent.Type);
+#endif
                     m_PacketProcessor.EnqueueIncoming(netEvent);
                 }
 
                 while (m_OutgoingQueue.Count > 0)
                 {
                     var outgoingPacket = m_OutgoingQueue.Dequeue();
-                    foreach (var peer in outgoingPacket.Peers)
+                    foreach (var networkPeer in outgoingPacket.Peers)
                     {
+#if LOG_NETWORK
+                        m_Logger.LogDebug($"[Network] > {outgoingPacket.PacketType.ToString()}");
+#endif
                         Packet packet = default;
 
                         MemoryStream ms = new MemoryStream();
@@ -97,8 +107,7 @@ namespace ImperialStudio.Core.Networking
                         ms.Dispose();
 
                         var channelId = (byte)outgoingPacket.PacketType.GetPacketDescription().Channel;
-                        peer.Send(channelId, ref packet);
-                        packet.Dispose();
+                        networkPeer.EnetPeer.Send(channelId, ref packet);
                     }
                 }
 
@@ -107,6 +116,8 @@ namespace ImperialStudio.Core.Networking
                     m_Host.Flush();
                     m_Flush = false;
                 }
+
+                Thread.Sleep(20);
             }
         }
 
@@ -118,6 +129,12 @@ namespace ImperialStudio.Core.Networking
             }
 
             IsListening = false;
+
+            foreach (var peer in m_ConnectedPeers)
+            {
+                peer.EnetPeer.DisconnectNow(0);
+            }
+
             m_Host?.Dispose();
             m_Host = null;
 
@@ -157,6 +174,12 @@ namespace ImperialStudio.Core.Networking
             m_NetworkThread.Start();
         }
 
+        protected void StopListening()
+        {
+            IsListening = false;
+            GameObject.Destroy(m_PacketProcessor.gameObject);
+        }
+
         public virtual void Dispose()
         {
             if (!IsListening)
@@ -165,37 +188,29 @@ namespace ImperialStudio.Core.Networking
             Shutdown(false);
         }
 
-        public bool IsAuthenticated(Peer peer)
+        public IEnumerable<NetworkPeer> GetPeers()
         {
-            return m_AuthenticatedPeers.Any(d => d.Value.ID == peer.ID);
+            return m_ConnectedPeers;
         }
 
-        public void Authenticate(Peer peer, ulong steamId)
+        public void RegisterPeer(NetworkPeer networkPeer)
         {
-            if (m_AuthenticatedPeers.ContainsKey(steamId))
-            {
-                throw new Exception("Peer is already verified: " + steamId);
-            }
-
-            m_AuthenticatedPeers.Add(steamId, peer);
+            m_ConnectedPeers.Add(networkPeer);
         }
 
-        public void Unauthenticate(Peer peer)
+        public void UnregisterPeer(NetworkPeer networkPeer)
         {
-            ulong steamId = 0;
+            m_ConnectedPeers.Remove(networkPeer);
+        }
 
-            foreach (var pair in m_AuthenticatedPeers)
-            {
-                if (pair.Value.ID == peer.ID)
-                {
-                    steamId = pair.Key;
-                }
-            }
+        public NetworkPeer GetPeerByNetworkId(uint peerID)
+        {
+            return m_ConnectedPeers.FirstOrDefault(d => d.EnetPeer.ID == peerID);
+        }
 
-            if (steamId != 0)
-            {
-                m_AuthenticatedPeers.Remove(steamId);
-            }
+        public NetworkPeer GetPeerBySteamId(ulong steamId)
+        {
+            return m_ConnectedPeers.FirstOrDefault(d => d.SteamId == steamId);
         }
     }
 }

@@ -22,7 +22,7 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
 
         protected override void OnHandleVerifiedPacket(IncomingPacket incomingPacket)
         {
-            m_ConnectionHandler.Authenticate(incomingPacket.Peer, 0);
+            incomingPacket.Peer.IsAuthenticated = true;
             m_Logger.LogInformation("Successfully authenticated to server.");
         }
     }

@@ -15,14 +15,14 @@ namespace ImperialStudio.Core.Networking
         private readonly IWindsorContainer m_Container;
         private readonly ILogger m_Logger;
         private readonly IConnectionHandler m_ConnectionHandler;
-        private readonly Dictionary<PacketType, IPacketHandler> m_PacketHandlers;
+        private readonly Dictionary<PacketType, ICollection<IPacketHandler>> m_PacketHandlers;
 
         public NetworkEventProcessor(IWindsorContainer container, ILogger logger, IConnectionHandler connectionHandler)
         {
             m_Container = container;
             m_Logger = logger;
             m_ConnectionHandler = connectionHandler;
-            m_PacketHandlers = new Dictionary<PacketType, IPacketHandler>();
+            m_PacketHandlers = new Dictionary<PacketType, ICollection<IPacketHandler>>();
 
             RegisterPacketHandlers();
         }
@@ -31,46 +31,28 @@ namespace ImperialStudio.Core.Networking
         {
             RegisterPacketHandler<AuthenticateHandler>();
             RegisterPacketHandler<AuthenticatedHandler>();
+            RegisterPacketHandler<PingHandler>();
+            RegisterPacketHandler<PongHandler>();
+            RegisterPacketHandler<TerminateHandler>();
         }
 
         public void RegisterPacketHandler<T>() where T : class, IPacketHandler
         {
             var instance = m_Container.Activate<T>();
 
-            if (m_PacketHandlers.ContainsKey(instance.PacketType))
+            if (!m_PacketHandlers.ContainsKey(instance.PacketType))
             {
-                throw new Exception($"A packet handler for \"{instance.PacketType}\" exists already!");
+                m_PacketHandlers.Add(instance.PacketType, new List<IPacketHandler>());
             }
 
-            m_PacketHandlers.Add(instance.PacketType, instance);
+
+            m_PacketHandlers[instance.PacketType].Add(instance);
         }
 
         public void ProcessEvent(Event @event)
         {
-            switch (@event.Type)
-            {
-                case EventType.None:
-                    break;
-                case EventType.Connect:
-                    break;
-                case EventType.Timeout:
-                case EventType.Disconnect:
-                    HandleDisconnect(@event);
-                    break;
-                case EventType.Receive:
-                    HandleReceive(@event);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
-
-        private void HandleDisconnect(Event @event)
-        {
-            if (m_ConnectionHandler.IsAuthenticated(@event.Peer))
-            {
-                m_ConnectionHandler.Unauthenticate(@event.Peer);
-            }
+            if (@event.Type == EventType.Receive)
+                HandleReceive(@event);
         }
 
         private void HandleReceive(Event @event)
@@ -88,26 +70,40 @@ namespace ImperialStudio.Core.Networking
                 ms.Read(packetData, 0, packetData.Length);
 
             ms.Dispose();
-            HandlePacket(@event.Peer, packetType, packetData, @event.ChannelID);
+
+            NetworkPeer networkPeer = m_ConnectionHandler.GetPeerByNetworkId(@event.Peer.ID);
+            if (networkPeer == null)
+            {
+                throw new Exception($"Failed to handle packet, peer was not found (peer #{@event.Peer.ID}; IsSet: {@event.Peer.IsSet}).");
+            }
+
+            HandlePacket(networkPeer, packetType, packetData, @event.ChannelID);
         }
 
-        private void HandlePacket(Peer peer, PacketType packetType, byte[] packetData, byte channelId)
+        private void HandlePacket(NetworkPeer peer, PacketType packetType, byte[] packetData, byte channelId)
         {
-            m_Logger.LogDebug("Received packet: " + packetType);
+#if LOG_NETWORK
+            m_Logger.LogDebug($"[Network] < {packetType.ToString()}");
+#endif
             if (!m_PacketHandlers.ContainsKey(packetType))
             {
-                m_Logger.LogWarning($"Failed to handle packet \"{packetType}\" from peer #{peer.ID}: No matching handler was found.");
+#if LOG_NETWORK
+                m_Logger.LogWarning($"Failed to handle packet \"{packetType}\" from {peer.Name}: No matching handler was found.");
+#endif
                 return;
             }
 
-            var handler = m_PacketHandlers[packetType];
-            handler.HandlePacket(new IncomingPacket
+            var handlers = m_PacketHandlers[packetType];
+            foreach (var handler in handlers)
             {
-                ChannelId = channelId,
-                PacketType = packetType,
-                Data = packetData,
-                Peer = peer
-            });
+                handler.HandlePacket(new IncomingPacket
+                {
+                    Channel = (NetworkChannel)channelId,
+                    PacketType = packetType,
+                    Data = packetData,
+                    Peer = peer
+                });
+            }
         }
     }
 }

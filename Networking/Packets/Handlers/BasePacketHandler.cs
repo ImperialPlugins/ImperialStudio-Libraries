@@ -41,7 +41,7 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
             m_ConnectionHandler = connectionHandler;
         }
 
-        protected abstract void OnHandleVerifiedPacket(Peer sender, T incomingPacket);
+        protected abstract void OnHandleVerifiedPacket(NetworkPeer sender, T incomingPacket);
     }
 
     public abstract class BasePacketHandler : IPacketHandler
@@ -66,29 +66,28 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
 
         public void HandlePacket(IncomingPacket incomingPacket)
         {
-            OnVerifyPacket(ref incomingPacket);
+            OnVerifyPacket(incomingPacket);
 
             if (incomingPacket.IsVerified)
                 OnHandleVerifiedPacket(incomingPacket);
         }
 
-        protected virtual void OnVerifyPacket(ref IncomingPacket incomingPacket)
+        protected virtual void OnVerifyPacket(IncomingPacket incomingPacket)
         {
             var currentPlatform = m_GamePlatformAccessor.GamePlatform;
             var packetDescription = incomingPacket.PacketType.GetPacketDescription();
 
             // Validate channel
-            if (incomingPacket.ChannelId != (byte) packetDescription.Channel)
+            if (incomingPacket.Channel != packetDescription.Channel)
             {
-                Reject(incomingPacket, $"Channel mismatch: received: {incomingPacket.ChannelId}, expected: {(byte)packetDescription.Channel}");
+                Reject(incomingPacket, $"Channel mismatch: received: {(byte)incomingPacket.Channel}, expected: {(byte)packetDescription.Channel}");
                 return;
             }
 
             // Validate authentication
             if (packetDescription.NeedsAuthentication)
             {
-                bool isAuthenticated = m_ConnectionHandler.IsAuthenticated(incomingPacket.Peer);
-                if (!isAuthenticated)
+                if (!incomingPacket.Peer.IsAuthenticated)
                 {
                     Reject(incomingPacket, "Unauthenticated peer");
                     return;
@@ -118,7 +117,7 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
                     }
 
                     var clientConnectionHandler = (ClientConnectionHandler)m_ConnectionHandler;
-                    if (incomingPacket.Peer.ID == clientConnectionHandler.ServerPeer.ID)
+                    if (incomingPacket.Peer.EnetPeer.ID == clientConnectionHandler.ServerPeer.EnetPeer.ID)
                     {
                         Reject(incomingPacket, "Server tried to send a client packet");
                         return;
@@ -135,7 +134,7 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
 
         protected void Reject(IncomingPacket incomingPacket, string reason)
         {
-            m_Logger.LogWarning($"Dropped packet \"{incomingPacket.PacketType.ToString()}\" from peer {incomingPacket.Peer.ID}: {reason}");
+            m_Logger.LogWarning($"Dropped packet \"{incomingPacket.PacketType.ToString()}\" from {incomingPacket.Peer.Name}: {reason}");
         }
 
         protected abstract void OnHandleVerifiedPacket(IncomingPacket incomingPacket);

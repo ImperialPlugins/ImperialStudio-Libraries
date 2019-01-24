@@ -64,8 +64,6 @@ namespace ImperialStudio.Core.Steam
             Server.DedicatedServer = true;
 #endif
             Server.LogOnAnonymous();
-
-            Debug.Log( "Steam Server Initialized: " + Server); 
         }
 	
         private void Update()

@@ -3,6 +3,7 @@ using ImperialStudio.Core.Eventing;
 using ImperialStudio.Core.Logging;
 using ImperialStudio.Core.Networking.Events;
 using NetStack.Threading;
+using System.Linq;
 using UnityEngine;
 using Event = ENet.Event;
 using ILogger = ImperialStudio.Core.Logging.ILogger;
@@ -54,8 +55,34 @@ namespace ImperialStudio.Core.Networking.Packets
 
             while (m_EventQueue.Count > 0)
             {
-                var @event = (Event) m_EventQueue.Dequeue();
-                m_Logger.LogInformation("Processing network event: " + @event.Type);
+                var @event = (Event)m_EventQueue.Dequeue();
+#if LOG_NETWORK
+                m_Logger.LogDebug("Processing network event: " + @event.Type);
+#endif
+
+                switch (@event.Type)
+                {
+                    case ENet.EventType.Connect:
+                        if (!@event.Peer.IsSet)
+                        {
+#if LOG_NETWORK
+                            m_Logger.LogWarning("Peer was not set in Connect event.");
+#endif
+                        }
+                        else
+                        {
+                            m_ConnectionHandler.RegisterPeer(new NetworkPeer(@event.Peer));
+                        }
+                        break;
+                    case ENet.EventType.Timeout:
+                    case ENet.EventType.Disconnect:
+                        var networkPeer = m_ConnectionHandler.GetPeers().FirstOrDefault(d => d.EnetPeer.ID == @event.Peer.ID);
+                        if (networkPeer != null)
+                        {
+                            m_ConnectionHandler.UnregisterPeer(networkPeer);
+                        }
+                        break;
+                }
 
                 NetworkEvent networkEvent = new NetworkEvent(@event);
                 m_EventBus.Emit(this, networkEvent);

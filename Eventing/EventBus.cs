@@ -97,10 +97,10 @@ namespace ImperialStudio.Core.Eventing
             if (@event == null)
                 throw new ArgumentNullException(nameof(@event));
 
-            string eventNameString = $"[{string.Join(", ", @event.Names.ToArray())}] by \"{sender}\"";
-            string primaryName = @event.Names.First();
-
-            logger.LogDebug(eventNameString + ": Emitting.");
+#if LOG_EVENTS
+            string eventNameString = $"{string.Join(", ", @event.Names.Select(d => d + "Event"))}";
+            logger.LogDebug(eventNameString + " fired.");
+#endif
 
             _inProgress.Add(@event);
 
@@ -124,7 +124,6 @@ namespace ImperialStudio.Core.Eventing
 
             void FinishEvent()
             {
-                logger.LogDebug(eventNameString + ": Finished.");
                 _inProgress.Remove(@event);
                 callback?.Invoke(@event);
             }

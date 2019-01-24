@@ -1,12 +1,13 @@
-﻿using System;
-using Castle.Windsor;
+﻿using Castle.Windsor;
 using ENet;
 using Facepunch.Steamworks;
 using ImperialStudio.Core.Eventing;
 using ImperialStudio.Core.Logging;
+using ImperialStudio.Core.Networking.Events;
 using ImperialStudio.Core.Networking.Packets.Handlers;
 using ImperialStudio.Core.Networking.Packets.Serialization;
 using ImperialStudio.Core.Steam;
+using System;
 using ILogger = ImperialStudio.Core.Logging.ILogger;
 
 namespace ImperialStudio.Core.Networking.Client
@@ -16,12 +17,13 @@ namespace ImperialStudio.Core.Networking.Client
         public ClientConnectionHandler(IPacketSerializer packetSerializer, ILogger logger, IEventBus eventBus, IWindsorContainer container) : base(packetSerializer, logger, eventBus, container)
         {
             m_Logger = logger;
+            eventBus.Subscribe<NetworkEvent>(this, HandleNetworkEvent);
         }
 
         private readonly ILogger m_Logger;
         private Auth.Ticket m_AuthTicket;
-
-        public Peer ServerPeer { get; private set; }
+        private bool m_ConnectingToServer;
+        public NetworkPeer ServerPeer { get; private set; }
 
         private void SetSessionAuthTicket(Auth.Ticket ticket)
         {
@@ -55,10 +57,12 @@ namespace ImperialStudio.Core.Networking.Client
             host.Create();
 
             StartListening();
-            ServerPeer = m_Host.Connect(address);
-            m_Logger.LogInformation($"Connecting to server: {address.GetHost()}:{address.Port}");
 
-            InitializeAuthentication();
+            m_ConnectingToServer = true;
+            var serverPeer = m_Host.Connect(address);
+
+            ServerPeer = new NetworkPeer(serverPeer) { IsAuthenticated = true };
+            RegisterPeer(ServerPeer);
         }
 
         private void InitializeAuthentication()
@@ -82,6 +86,31 @@ namespace ImperialStudio.Core.Networking.Client
 
             m_AuthTicket?.Cancel();
             m_AuthTicket = null;
+        }
+
+        private void HandleNetworkEvent(object sender, NetworkEvent @event)
+        {
+            if (@event.EnetEvent.Type != EventType.Connect)
+                return;
+
+            if (!m_ConnectingToServer)
+                return; //handle other peers
+
+            if (ServerPeer == null)
+            {
+                throw new Exception("Failed to get server peer");
+            }
+
+            m_Logger.LogInformation($"Connected to server: {ServerPeer.EnetPeer.IP}:{ServerPeer.EnetPeer.Port}");
+
+            InitializeAuthentication();
+            m_ConnectingToServer = false;
+        }
+
+        public void Disconnect()
+        {
+            ServerPeer.EnetPeer.DisconnectNow(0);
+            StopListening();
         }
     }
 }
