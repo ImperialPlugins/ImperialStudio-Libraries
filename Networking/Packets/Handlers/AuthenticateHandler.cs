@@ -53,11 +53,14 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
                 if (authSessionResponse != ServerAuth.Status.AuthTicketCanceled)
                     m_Logger.LogWarning($"Authentication failed for {peer.Name}: {authSessionResponse.ToString()}");
 
+                peer.IsAuthenticated = false;
                 m_ServerConnectionHandler.Disconnect(peer, authSessionResponse);
                 return;
             }
 
             peer.SteamId = steamId;
+            peer.IsAuthenticated = true;
+
             m_ServerConnectionHandler.Send(new OutgoingPacket
             {
                 PacketType = PacketType.Authenticated,

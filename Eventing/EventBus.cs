@@ -130,7 +130,9 @@ namespace ImperialStudio.Core.Eventing
 
             if (targetActions.Count == 0)
             {
+#if LOG_EVENTS
                 logger.LogDebug(eventNameString + ": No listeners found.");
+#endif
                 FinishEvent();
                 return;
             }

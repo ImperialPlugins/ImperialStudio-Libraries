@@ -4,6 +4,7 @@ using ImperialStudio.Core.Networking.Packets.Handlers;
 
 namespace ImperialStudio.Core.Networking.Packets.Serialization
 {
+    //This is temporary for now
     public class BinaryPacketSerializer : IPacketSerializer
     {
         public byte[] Serialize(IPacket packet) 

@@ -54,14 +54,14 @@ namespace ImperialStudio.Core.Networking.Server
             }
 
             var host = GetOrCreateHost();
-            host.Create(address, MaxPlayersUpperLimit);
+            host.Create(address, MaxPlayersUpperLimit, ChannelUpperLimit);
 
             StartListening();
 
             m_Logger.LogInformation($"Hosted server: {hostName}:{listenParameters.Port}");
             StartPingThread();
         }
-
+        
         public void Disconnect(NetworkPeer peer, ServerAuth.Status reason)
         {
             if (peer.EnetPeer.State == PeerState.Disconnected || peer.EnetPeer.State == PeerState.Disconnecting || peer.EnetPeer.State == PeerState.DisconnectLater)

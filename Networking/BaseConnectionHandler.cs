@@ -22,6 +22,8 @@ namespace ImperialStudio.Core.Networking
 {
     public abstract class BaseConnectionHandler : IConnectionHandler
     {
+        public const byte ChannelUpperLimit = 255;
+
         private readonly Queue<OutgoingPacket> m_OutgoingQueue;
         private readonly ICollection<NetworkPeer> m_ConnectedPeers;
 

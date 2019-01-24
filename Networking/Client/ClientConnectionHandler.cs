@@ -59,7 +59,7 @@ namespace ImperialStudio.Core.Networking.Client
             StartListening();
 
             m_ConnectingToServer = true;
-            var serverPeer = m_Host.Connect(address);
+            var serverPeer = m_Host.Connect(address, ChannelUpperLimit);
 
             ServerPeer = new NetworkPeer(serverPeer) { IsAuthenticated = true };
             RegisterPeer(ServerPeer);
