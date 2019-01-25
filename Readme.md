@@ -9,7 +9,7 @@ Some features include:
 ## License
 All rights reserved (c) 2019 Enes Sadık Özbek. 
 
-Some code was burrowed from my contributions to [RocketMod](https://github.com/RocketMod/Rocket) (EventBus, Loggers and ReflectionExtensions). These are licensed under Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 license.
+Some code was burrowed from my contributions to [RocketMod](https://github.com/RocketMod/Rocket) (EventBus, Loggers, TaskScheduler and ReflectionExtensions). These are licensed under Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 license.
 All other published source code is for educational purposes only and may not be used in commercial projects.
 
 ## Dependencies
