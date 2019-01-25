@@ -1,4 +1,5 @@
 ﻿using System;
+using ENet;
 
 namespace ImperialStudio.Core.Networking.Packets
 {
@@ -6,13 +7,15 @@ namespace ImperialStudio.Core.Networking.Packets
     {
         public PacketDirection Direction { get; }
         public NetworkChannel Channel { get; }
+        public PacketFlags PacketFlags { get; }
 
         public bool NeedsAuthentication { get;  }
 
-        public PacketDescriptionAttribute(PacketDirection direction, NetworkChannel channel, bool needsAuthentication = true)
+        public PacketDescriptionAttribute(PacketDirection direction, NetworkChannel channel, PacketFlags packetFlags, bool needsAuthentication = true)
         {
             Direction = direction;
             Channel = channel;
+            PacketFlags = packetFlags;
             NeedsAuthentication = needsAuthentication;
         }
     }

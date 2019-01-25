@@ -169,8 +169,7 @@ namespace ImperialStudio.Core.Networking
                 MemoryStream ms = new MemoryStream();
                 ms.WriteByte((byte)outgoingPacket.PacketType);
                 ms.Write(outgoingPacket.Data, 0, outgoingPacket.Data.Length);
-
-                packet.Create(ms.ToArray());
+                packet.Create(ms.ToArray(), outgoingPacket.PacketType.GetPacketDescription().PacketFlags);
                 ms.Dispose();
 
                 var channelId = (byte)outgoingPacket.PacketType.GetPacketDescription().Channel;
