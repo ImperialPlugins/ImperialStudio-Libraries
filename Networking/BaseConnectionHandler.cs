@@ -101,23 +101,7 @@ namespace ImperialStudio.Core.Networking
                 while (m_OutgoingQueue.Count > 0)
                 {
                     var outgoingPacket = m_OutgoingQueue.Dequeue();
-                    foreach (var networkPeer in outgoingPacket.Peers)
-                    {
-#if LOG_NETWORK
-                        m_Logger.LogDebug($"[Network] > {outgoingPacket.PacketType.ToString()}");
-#endif
-                        Packet packet = default;
-
-                        MemoryStream ms = new MemoryStream();
-                        ms.WriteByte((byte)outgoingPacket.PacketType);
-                        ms.Write(outgoingPacket.Data, 0, outgoingPacket.Data.Length);
-
-                        packet.Create(ms.ToArray());
-                        ms.Dispose();
-
-                        var channelId = (byte)outgoingPacket.PacketType.GetPacketDescription().Channel;
-                        networkPeer.EnetPeer.Send(channelId, ref packet);
-                    }
+                    HandleOutgoingPacket(outgoingPacket);
                 }
 
                 if (AutoFlush || m_Flush)
@@ -168,7 +152,30 @@ namespace ImperialStudio.Core.Networking
             if (networkEvent.IsCancelled)
                 return;
 
-            m_NetworkEventProcessor.ProcessEvent(@event, networkPeer);
+            m_NetworkEventProcessor.ProcessNetworkEvent(@event, networkPeer);
+        }
+
+        private void HandleOutgoingPacket(OutgoingPacket outgoingPacket)
+        {
+#if LOG_NETWORK
+            m_Logger.LogDebug($"[Network] > {outgoingPacket.PacketType.ToString()}");
+#endif
+
+            foreach (var networkPeer in outgoingPacket.Peers)
+            {
+
+                Packet packet = default;
+
+                MemoryStream ms = new MemoryStream();
+                ms.WriteByte((byte)outgoingPacket.PacketType);
+                ms.Write(outgoingPacket.Data, 0, outgoingPacket.Data.Length);
+
+                packet.Create(ms.ToArray());
+                ms.Dispose();
+
+                var channelId = (byte)outgoingPacket.PacketType.GetPacketDescription().Channel;
+                networkPeer.EnetPeer.Send(channelId, ref packet);
+            }
         }
 
         public void Shutdown(bool waitForQueue = true)
@@ -207,7 +214,10 @@ namespace ImperialStudio.Core.Networking
 
             m_NetworkEventProcessor.EnsureLoaded();
 
-            m_NetworkThread = new Thread(NetworkUpdate);
+            m_NetworkThread = new Thread(NetworkUpdate)
+            {
+                Name = "NetworkThread-" + GetType().Name
+            };
             m_NetworkThread.Start();
         }
 

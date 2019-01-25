@@ -4,6 +4,7 @@ using Facepunch.Steamworks;
 using ImperialStudio.Core.Eventing;
 using ImperialStudio.Core.Game;
 using ImperialStudio.Core.Logging;
+using ImperialStudio.Core.Map;
 using ImperialStudio.Core.Networking.Events;
 using ImperialStudio.Core.Networking.Packets.Serialization;
 using ImperialStudio.Core.Networking.Server;
@@ -15,6 +16,7 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
     public class AuthenticateHandler : BasePacketHandler<AuthenticatePacket>
     {
         private readonly ServerConnectionHandler m_ServerConnectionHandler;
+        private readonly IMapManager m_MapManager;
         private readonly ILogger m_Logger;
         private readonly Dictionary<ulong, NetworkPeer> m_PendingAuthentications;
 
@@ -23,9 +25,11 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
             IGamePlatformAccessor gamePlatformAccessor,
             IConnectionHandler connectionHandler,
             IEventBus eventBus,
+            IMapManager mapManager,
             ILogger logger) : base(packetSerializer, gamePlatformAccessor, connectionHandler, logger)
         {
             m_ServerConnectionHandler = connectionHandler as ServerConnectionHandler;
+            m_MapManager = mapManager;
             m_Logger = logger;
             m_PendingAuthentications = new Dictionary<ulong, NetworkPeer>();
 
@@ -67,6 +71,9 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
                 Data = new byte[0],
                 Peers = new[] { peer }
             });
+
+            var mapPacket = new MapChangePacket { MapName = m_MapManager.CurrentMap };
+            m_ServerConnectionHandler.Send(peer, mapPacket);
         }
 
         private void HandleNetworkEvent(object sender, NetworkEvent @event)

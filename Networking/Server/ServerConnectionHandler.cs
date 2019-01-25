@@ -4,11 +4,13 @@ using ENet;
 using Facepunch.Steamworks;
 using ImperialStudio.Core.Eventing;
 using ImperialStudio.Core.Logging;
+using ImperialStudio.Core.Map;
 using ImperialStudio.Core.Networking.Packets.Handlers;
 using ImperialStudio.Core.Networking.Packets.Serialization;
 using System;
 using System.Linq;
 using System.Threading;
+using UnityEngine;
 using ILogger = ImperialStudio.Core.Logging.ILogger;
 
 namespace ImperialStudio.Core.Networking.Server
@@ -21,15 +23,23 @@ namespace ImperialStudio.Core.Networking.Server
         public string Name { get; private set; }
         public byte MaxPlayers { get; set; }
 
-        public ServerConnectionHandler(IPacketSerializer packetSerializer, INetworkEventHandler networkEventProcessor, ILogger logger, IEventBus eventBus, IWindsorContainer container) : base(packetSerializer, networkEventProcessor, logger, eventBus, container)
+        public ServerConnectionHandler(
+            IPacketSerializer packetSerializer,
+            INetworkEventHandler networkEventProcessor,
+            ILogger logger,
+            IEventBus eventBus,
+            IWindsorContainer container,
+            IMapManager mapManager) : base(packetSerializer, networkEventProcessor, logger, eventBus, container)
         {
             m_EventBus = eventBus;
+            m_MapManager = mapManager;
             m_Logger = logger;
 
-            ClientTimeOut = TimeSpan.FromSeconds(5);
+            ClientTimeOut = TimeSpan.FromSeconds(15);
         }
 
         private readonly IEventBus m_EventBus;
+        private readonly IMapManager m_MapManager;
         private readonly ILogger m_Logger;
         public const byte MaxPlayersUpperLimit = byte.MaxValue;
 
@@ -54,14 +64,26 @@ namespace ImperialStudio.Core.Networking.Server
             }
 
             var host = GetOrCreateHost();
-            host.Create(address, MaxPlayersUpperLimit, ChannelUpperLimit);
+
+            try
+            {
+                host.Create(address, MaxPlayersUpperLimit, ChannelUpperLimit);
+            }
+            catch (Exception ex)
+            {
+                m_Logger.LogError($"Failed to host server. Is port {listenParameters.Port} already being used?", ex);
+                Application.Quit(1);
+                return;
+            }
 
             StartListening();
 
             m_Logger.LogInformation($"Hosted server: {hostName}:{listenParameters.Port}");
             StartPingThread();
+
+            m_MapManager.ChangeMap(listenParameters.Map);
         }
-        
+
         public void Disconnect(NetworkPeer peer, ServerAuth.Status reason)
         {
             if (peer.EnetPeer.State == PeerState.Disconnected || peer.EnetPeer.State == PeerState.Disconnecting || peer.EnetPeer.State == PeerState.DisconnectLater)
@@ -127,7 +149,7 @@ namespace ImperialStudio.Core.Networking.Server
 
                     if (isConnected)
                     {
-                        // Disconnect(pendingPing.NetworkPeer, "Timeout.");
+                        Disconnect(pendingPing.NetworkPeer, "Timeout.");
                     }
                 }
 

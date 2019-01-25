@@ -23,12 +23,6 @@
         [PacketDescription(PacketDirection.ClientToServer, NetworkChannel.Input)]
         InputUpdate,
 
-        [PacketDescription(PacketDirection.ClientToServer, NetworkChannel.Chat)]
-        ChatInput,  
-
-        [PacketDescription(PacketDirection.ClientToServer, NetworkChannel.Chat)]
-        ChatOutput,
-
         [PacketDescription(PacketDirection.ServerToClient, NetworkChannel.Main)]
         Terminate
     }

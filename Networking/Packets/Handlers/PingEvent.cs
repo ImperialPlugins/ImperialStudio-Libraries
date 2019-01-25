@@ -1,5 +1,4 @@
-﻿using ENet;
-using ImperialStudio.Core.Eventing;
+﻿using ImperialStudio.Core.Eventing;
 using Event = ImperialStudio.Core.Eventing.Event;
 
 namespace ImperialStudio.Core.Networking.Packets.Handlers
@@ -11,6 +10,7 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
             Peer = sender;
             PingPacket = pingPacket;
         }
+
         public NetworkPeer Peer { get; }
         public PingPacket PingPacket { get; }
         public bool IsCancelled { get; set; }

@@ -32,6 +32,7 @@ namespace ImperialStudio.Core.Networking
             RegisterPacketHandler<AuthenticatedHandler>();
             RegisterPacketHandler<PingHandler>();
             RegisterPacketHandler<PongHandler>();
+            RegisterPacketHandler<MapChangeHandler>();
             RegisterPacketHandler<TerminateHandler>();
 
             m_Inited = true;
@@ -49,7 +50,7 @@ namespace ImperialStudio.Core.Networking
             m_PacketHandlers[instance.PacketType].Add(instance);
         }
 
-        public void ProcessEvent(Event @event, NetworkPeer networkPeer)
+        public void ProcessNetworkEvent(Event @event, NetworkPeer networkPeer)
         {
             if (@event.Type == EventType.Receive)
                 HandleReceive(@event, networkPeer);
@@ -70,10 +71,10 @@ namespace ImperialStudio.Core.Networking
                 ms.Read(packetData, 0, packetData.Length);
 
             ms.Dispose();
-            HandlePacket(networkPeer, packetType, packetData, @event.ChannelID);
+            HandleIncomingPacket(networkPeer, packetType, packetData, @event.ChannelID);
         }
 
-        private void HandlePacket(NetworkPeer peer, PacketType packetType, byte[] packetData, byte channelId)
+        private void HandleIncomingPacket(NetworkPeer peer, PacketType packetType, byte[] packetData, byte channelId)
         {
 #if LOG_NETWORK
             m_Logger.LogDebug($"[Network] < {packetType.ToString()}");
