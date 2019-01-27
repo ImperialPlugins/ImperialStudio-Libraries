@@ -1,10 +1,10 @@
-﻿using ImperialStudio.Core.Networking.Packets.Handlers;
+﻿using System;
 
 namespace ImperialStudio.Core.Networking.Packets.Serialization
 {
     public interface IPacketSerializer
     {
-        byte[] Serialize(IPacket packet);
-        T Deserialize<T>(byte[] data) where T : IPacket;
+        byte[] Serialize<T>(T packet) where T : class, IPacket;
+        T Deserialize<T>(byte[] data) where T : class, IPacket, new();
     }
 }

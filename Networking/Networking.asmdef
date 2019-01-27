@@ -3,7 +3,9 @@
     "references": [
         "GUID:ceeed2145ec05bb45af444795113f625",
         "GUID:23b0366dde14c1f4fae99ae8bd848f50",
-        "GUID:4bf48fd7ef5910741af47e89f830e96e"
+        "GUID:4bf48fd7ef5910741af47e89f830e96e",
+        "GUID:5054aa1525d5d6e40b0854c3c076b01c",
+        "GUID:827909ceda633254e963e0eb2dd9a2a2"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],
@@ -15,7 +17,9 @@
         "Castle.Windsor.dll",
         "Facepunch.Steamworks.dll",
         "Microsoft.CSharp.dll",
-        "BinarySerializer.dll"
+        "ZeroFormatter.dll",
+        "ZeroFormatter.Interfaces.dll",
+        "System.Memory.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],

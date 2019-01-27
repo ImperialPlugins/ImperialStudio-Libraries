@@ -1,5 +1,4 @@
-﻿using ENet;
-using ImperialStudio.Core.Game;
+﻿using ImperialStudio.Core.Game;
 using ImperialStudio.Core.Logging;
 using ImperialStudio.Core.Networking.Client;
 using ImperialStudio.Core.Networking.Packets.Serialization;
@@ -8,13 +7,14 @@ using System.Linq;
 
 namespace ImperialStudio.Core.Networking.Packets.Handlers
 {
-    public abstract class BasePacketHandler<T> : BasePacketHandler where T : IPacket
+    public abstract class BasePacketHandler<T> : BasePacketHandler where T : class, IPacket, new()
     {
         private readonly IConnectionHandler m_ConnectionHandler;
 
         protected sealed override void OnHandleVerifiedPacket(IncomingPacket incomingPacket)
         {
             T deserialized;
+
             try
             {
                 deserialized = PacketSerializer.Deserialize<T>(incomingPacket.Data);
@@ -70,6 +70,10 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
 
             if (incomingPacket.IsVerified)
                 OnHandleVerifiedPacket(incomingPacket);
+#if LOG_NETWORK
+            else
+                m_Logger.LogWarning($"Dropped packet from {incomingPacket.Peer.Name}: Packet could not be verified.");
+#endif
         }
 
         protected virtual void OnVerifyPacket(IncomingPacket incomingPacket)

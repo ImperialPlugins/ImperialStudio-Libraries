@@ -5,12 +5,12 @@ namespace ImperialStudio.Core.Networking
 {
     public class NetworkPeer
     {
-        public NetworkPeer(Peer peer)
+        public NetworkPeer(Peer enetPeer)
         {
-            EnetPeer = peer;
+            EnetPeer = enetPeer;
         }
 
-        public Peer EnetPeer { get; }
+        public Peer EnetPeer { get; set; }
         public bool IsAuthenticated { get; set; }
         public ulong SteamId { get; set; }
         public TimeSpan Ping { get; set; }

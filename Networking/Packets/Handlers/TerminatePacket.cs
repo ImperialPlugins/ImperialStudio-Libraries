@@ -1,15 +1,16 @@
-﻿using BinarySerialization;
-using Facepunch.Steamworks;
+﻿using Facepunch.Steamworks;
+using ZeroFormatter;
 
 namespace ImperialStudio.Core.Networking.Packets.Handlers
 {
     [PacketType(PacketType.Terminate)]
+    [ZeroFormattable]
     public class TerminatePacket : IPacket
     {
-        [FieldOrder(0)]
-        public string Reason { get; set; }
+        [Index(0)]
+        public virtual string Reason { get; set; }
 
-        [FieldOrder(1)]
-        public ServerAuth.Status AuthFailureReason { get; set; }
+        [Index(1)]
+        public virtual ServerAuth.Status AuthFailureReason { get; set; }
     }
 }

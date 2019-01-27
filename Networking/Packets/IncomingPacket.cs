@@ -1,6 +1,8 @@
-﻿namespace ImperialStudio.Core.Networking.Packets
+﻿using System;
+
+namespace ImperialStudio.Core.Networking.Packets
 {
-    public sealed class IncomingPacket
+    public class IncomingPacket
     {
         public NetworkPeer Peer { get; set; }
         public PacketType PacketType { get; set; }

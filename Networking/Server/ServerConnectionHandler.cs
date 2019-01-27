@@ -17,11 +17,16 @@ namespace ImperialStudio.Core.Networking.Server
 {
     public sealed class ServerConnectionHandler : BaseConnectionHandler
     {
-        private const int PingInterval = 1000 * 5;
+        public const byte MaxPlayersUpperLimit = byte.MaxValue;
         public TimeSpan ClientTimeOut { get; set; }
 
+        private const int PingInterval = 1000 * 5;
+
         public string Name { get; private set; }
+
         public byte MaxPlayers { get; set; }
+
+        public bool UseCustomPingHandler { get; set; } = true;
 
         public ServerConnectionHandler(
             IPacketSerializer packetSerializer,
@@ -41,7 +46,7 @@ namespace ImperialStudio.Core.Networking.Server
         private readonly IEventBus m_EventBus;
         private readonly IMapManager m_MapManager;
         private readonly ILogger m_Logger;
-        public const byte MaxPlayersUpperLimit = byte.MaxValue;
+        private Thread m_PingThread;
 
         public void Host(ServerListenParameters listenParameters)
         {
@@ -82,6 +87,7 @@ namespace ImperialStudio.Core.Networking.Server
             StartPingThread();
 
             m_MapManager.ChangeMap(listenParameters.Map);
+            m_EventBus.Emit(this, new ServerInitializedEvent(listenParameters));
         }
 
         public void Disconnect(NetworkPeer peer, ServerAuth.Status reason)
@@ -120,8 +126,8 @@ namespace ImperialStudio.Core.Networking.Server
         {
             m_PendingPings = new List<PendingPing>();
 
-            Thread thread = new Thread(PingClients);
-            thread.Start();
+            m_PingThread = new Thread(PingClients);
+            m_PingThread.Start();
         }
 
         private List<PendingPing> m_PendingPings = new List<PendingPing>();
@@ -136,44 +142,57 @@ namespace ImperialStudio.Core.Networking.Server
 
             while (IsListening)
             {
-                var toDisconnect = new List<PendingPing>();
-
-                foreach (var pendingPing in m_PendingPings)
+                if (UseCustomPingHandler)
                 {
-                    TimeSpan ping = DateTime.UtcNow - pendingPing.SendTime;
+                    var toDisconnect = new List<PendingPing>();
 
-                    if (ping > ClientTimeOut)
-                        toDisconnect.Add(pendingPing);
-
-                    bool isConnected = pendingPing.NetworkPeer.EnetPeer.State == PeerState.Connected;
-
-                    if (isConnected)
+                    foreach (var pendingPing in m_PendingPings)
                     {
-                        Disconnect(pendingPing.NetworkPeer, "Timeout.");
+                        TimeSpan ping = DateTime.UtcNow - pendingPing.SendTime;
+
+                        if (ping > ClientTimeOut)
+                            toDisconnect.Add(pendingPing);
+
+                        bool isConnected = pendingPing.NetworkPeer.EnetPeer.State == PeerState.Connected;
+
+                        if (isConnected)
+                        {
+                            Disconnect(pendingPing.NetworkPeer, "Timeout.");
+                        }
                     }
+
+                    m_PendingPings.RemoveAll(d => toDisconnect.Contains(d));
+
+                    foreach (var client in GetPeers())
+                    {
+                        ulong currentPingId = m_NextPingId;
+
+                        PendingPing pendingPing = new PendingPing
+                        {
+                            SendTime = DateTime.UtcNow,
+                            NetworkPeer = client,
+                            PingId = currentPingId
+                        };
+
+                        m_PendingPings.Add(pendingPing);
+
+                        Send(client, new PingPacket
+                        {
+                            PingId = currentPingId
+                        });
+
+                        m_NextPingId++;
+                    }
+
                 }
-
-                m_PendingPings.RemoveAll(d => toDisconnect.Contains(d));
-
-                foreach (var client in GetPeers())
+                else
                 {
-                    ulong currentPingId = m_NextPingId;
-
-                    PendingPing pendingPing = new PendingPing
+#if LOG_NETWORK
+                    foreach (var peer in GetPeers())
                     {
-                        SendTime = DateTime.UtcNow,
-                        NetworkPeer = client,
-                        PingId = currentPingId
-                    };
-
-                    m_PendingPings.Add(pendingPing);
-
-                    Send(client, new PingPacket
-                    {
-                        PingId = currentPingId
-                    });
-
-                    m_NextPingId++;
+                        m_Logger.LogDebug($"{peer.Name} ping: {peer.EnetPeer.RoundTripTime}ms");
+                    }
+#endif
                 }
 
                 Thread.Sleep(PingInterval);

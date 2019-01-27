@@ -1,11 +1,12 @@
-﻿using BinarySerialization;
+﻿using ZeroFormatter;
 
 namespace ImperialStudio.Core.Networking.Packets.Handlers
 {
     [PacketType(PacketType.MapChange)]
+    [ZeroFormattable]
     public class MapChangePacket : IPacket
     {
-        [FieldOrder(0)]
-        public string MapName { get; set; }
+        [Index(0)]
+        public virtual string MapName { get; set; }
     }
 }

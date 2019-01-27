@@ -71,13 +71,12 @@ namespace ImperialStudio.Core.Networking.Client
             var ticket = SteamClientComponent.Instance.Client.Auth.GetAuthSessionTicket();
 
             SetSessionAuthTicket(ticket);
-            var packet = new AuthenticatePacket
+
+            Send(ServerPeer, new AuthenticatePacket
             {
                 SteamId = clientId,
                 Ticket = ticket.Data
-            };
-
-            Send(ServerPeer, packet);
+            });
         }
 
         public override void Dispose()
@@ -102,6 +101,7 @@ namespace ImperialStudio.Core.Networking.Client
             }
 
             m_Logger.LogInformation($"Connected to server: {ServerPeer.EnetPeer.IP}:{ServerPeer.EnetPeer.Port}");
+            m_Host.PreventConnections(true);
 
             InitializeAuthentication();
             m_ConnectingToServer = false;

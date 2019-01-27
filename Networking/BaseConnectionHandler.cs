@@ -1,9 +1,7 @@
 ﻿using Castle.Windsor;
 using ENet;
-using ImperialStudio.Core.DependencyInjection;
 using ImperialStudio.Core.Eventing;
 using ImperialStudio.Core.Events;
-using ImperialStudio.Core.Game;
 using ImperialStudio.Core.Logging;
 using ImperialStudio.Core.Networking.Events;
 using ImperialStudio.Core.Networking.Packets;
@@ -14,11 +12,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using UnityEngine;
 using Event = ENet.Event;
 using EventType = ENet.EventType;
 using ILogger = ImperialStudio.Core.Logging.ILogger;
-using Object = UnityEngine.Object;
 
 namespace ImperialStudio.Core.Networking
 {
@@ -56,14 +52,14 @@ namespace ImperialStudio.Core.Networking
             m_ConnectedPeers = new List<NetworkPeer>();
         }
 
-        public void Send(NetworkPeer peer, IPacket packet)
+        public void Send<T>(NetworkPeer peer, T packet) where T: class, IPacket
         {
-            byte[] packetData = m_PacketSerializer.Serialize(packet);
+            byte[] data = m_PacketSerializer.Serialize(packet);
 
             var packetType = packet.GetPacketType();
             Send(new OutgoingPacket
             {
-                Data = packetData,
+                Data = data,
                 PacketType = packetType,
                 Peers = new[] { peer }
             });
@@ -88,6 +84,11 @@ namespace ImperialStudio.Core.Networking
         {
             while (IsListening)
             {
+                if (m_Host == null)
+                {
+                    break;
+                }
+
                 m_Host.Service(1, out var netEvent);
                 if (netEvent.Type != EventType.None)
                 {
@@ -106,7 +107,7 @@ namespace ImperialStudio.Core.Networking
 
                 if (AutoFlush || m_Flush)
                 {
-                    m_Host.Flush();
+                    m_Host?.Flush();
                     m_Flush = false;
                 }
             }
@@ -160,21 +161,22 @@ namespace ImperialStudio.Core.Networking
 #if LOG_NETWORK
             m_Logger.LogDebug($"[Network] > {outgoingPacket.PacketType.ToString()}");
 #endif
+            var peers = outgoingPacket.Peers.Select(d => d.EnetPeer).ToArray();
 
-            foreach (var networkPeer in outgoingPacket.Peers)
-            {
+            Packet packet = default;
 
-                Packet packet = default;
+            MemoryStream ms = new MemoryStream();
+            ms.WriteByte((byte)outgoingPacket.PacketType);
+            ms.Write(outgoingPacket.Data.ToArray(), 0, outgoingPacket.Data.Length);
+            packet.Create(ms.ToArray(), outgoingPacket.PacketType.GetPacketDescription().PacketFlags);
+            ms.Dispose();
 
-                MemoryStream ms = new MemoryStream();
-                ms.WriteByte((byte)outgoingPacket.PacketType);
-                ms.Write(outgoingPacket.Data, 0, outgoingPacket.Data.Length);
-                packet.Create(ms.ToArray(), outgoingPacket.PacketType.GetPacketDescription().PacketFlags);
-                ms.Dispose();
+            var channelId = (byte)outgoingPacket.PacketType.GetPacketDescription().Channel;
 
-                var channelId = (byte)outgoingPacket.PacketType.GetPacketDescription().Channel;
-                networkPeer.EnetPeer.Send(channelId, ref packet);
-            }
+            if (peers.Length == 1)
+                peers.First().Send(channelId, ref packet);
+            else
+                m_Host.Broadcast(channelId, ref packet, peers);
         }
 
         public void Shutdown(bool waitForQueue = true)
@@ -186,14 +188,8 @@ namespace ImperialStudio.Core.Networking
 
             IsListening = false;
 
-            foreach (var peer in m_ConnectedPeers)
-            {
-                peer.EnetPeer.DisconnectNow(0);
-            }
-
             m_Host?.Dispose();
             m_Host = null;
-
             //todo: implement waitForQueue
         }
 

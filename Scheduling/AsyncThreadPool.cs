@@ -22,7 +22,7 @@ namespace ImperialStudio.Core.Scheduling
 
         private void ContinousThreadLoop()
         {
-            while (true)
+            while (m_TaskScheduler)
             {
                 var cpy = m_TaskScheduler.Tasks.Where(c => !c.IsFinished && !c.IsCancelled).ToList(); // we need a copy because the task list may be modified at runtime
 

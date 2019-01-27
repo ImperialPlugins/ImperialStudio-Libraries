@@ -36,26 +36,12 @@ namespace ImperialStudio.Core.Steam
             //
             Facepunch.Steamworks.Config.ForUnity( Application.platform.ToString() );
 
-            //
-            // Create a steam_appid.txt (this seems greasy as fuck, but this is exactly
-            // what UE's Steamworks plugin does, so fuck it.
-            //
-            try
-            {
-                System.IO.File.WriteAllText("steam_appid.txt", AppId.ToString());
-            }
-            catch ( System.Exception e )
-            {
-                Debug.LogWarning("Couldn't write steam_appid.txt: " + e.Message );
-            }
-
             // Create the client
             Client = new Facepunch.Steamworks.Client( AppId );
 
             if ( !Client.IsValid )
             {
                 Client = null;
-                Debug.LogWarning("Couldn't initialize Steam");
                 return;
             }
 

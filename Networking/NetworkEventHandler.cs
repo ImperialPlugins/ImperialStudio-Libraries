@@ -58,23 +58,19 @@ namespace ImperialStudio.Core.Networking
 
         private void HandleReceive(Event @event, NetworkPeer networkPeer)
         {
-            byte[] buffer = new byte[@event.Packet.Length];
-            @event.Packet.CopyTo(buffer);
+            byte[] incomingPacket = new byte[@event.Packet.Length];
+            @event.Packet.CopyTo(incomingPacket);
             @event.Packet.Dispose();
 
-            MemoryStream ms = new MemoryStream(buffer);
-            PacketType packetType = (PacketType)ms.ReadByte();
 
-            byte[] packetData = new byte[Math.Max(buffer.Length - 1, 0)];
+            PacketType packetType = (PacketType)incomingPacket[0];
+            byte[] incomingPacketBody = new byte[incomingPacket.Length - 1];
 
-            if (packetData.Length > 0)
-                ms.Read(packetData, 0, packetData.Length);
-
-            ms.Dispose();
-            HandleIncomingPacket(networkPeer, packetType, packetData, @event.ChannelID);
+            Buffer.BlockCopy(incomingPacket, 1, incomingPacketBody, 0, incomingPacketBody.Length);
+            HandleIncomingPacket(networkPeer, packetType, incomingPacketBody, @event.ChannelID);
         }
 
-        private void HandleIncomingPacket(NetworkPeer peer, PacketType packetType, byte[] packetData, byte channelId)
+        private void HandleIncomingPacket(NetworkPeer peer, PacketType packetType, byte[] packetBody, byte channelId)
         {
 #if LOG_NETWORK
             m_Logger.LogDebug($"[Network] < {packetType.ToString()}");
@@ -94,7 +90,7 @@ namespace ImperialStudio.Core.Networking
                 {
                     Channel = (NetworkChannel)channelId,
                     PacketType = packetType,
-                    Data = packetData,
+                    Data = packetBody,
                     Peer = peer
                 });
             }

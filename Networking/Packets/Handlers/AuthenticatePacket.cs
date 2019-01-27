@@ -1,14 +1,15 @@
-﻿using BinarySerialization;
+﻿using ZeroFormatter;
 
 namespace ImperialStudio.Core.Networking.Packets.Handlers
 {
     [PacketType(PacketType.Authenticate)]
+    [ZeroFormattable]
     public class AuthenticatePacket : IPacket
     {
-        [FieldOrder(0)]
-        public ulong SteamId { get; set; }
+        [Index(0)]
+        public virtual ulong SteamId { get; set; }
 
-        [FieldOrder(1)]
-        public byte[] Ticket { get; set; }
+        [Index(1)]
+        public virtual byte[] Ticket { get; set; }
     }
 }

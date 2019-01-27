@@ -1,11 +1,12 @@
-﻿using BinarySerialization;
+﻿using ZeroFormatter;
 
 namespace ImperialStudio.Core.Networking.Packets.Handlers
 {
     [PacketType(PacketType.Ping)]
+    [ZeroFormattable]
     public class PingPacket : IPacket
     {
-        [FieldOrder(0)]
-        public ulong PingId { get; set; }
+        [Index(0)]
+        public virtual ulong PingId { get; set; }
     }
 }

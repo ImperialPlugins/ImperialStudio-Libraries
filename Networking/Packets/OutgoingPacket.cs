@@ -1,9 +1,10 @@
-﻿using ENet;
+﻿using System;
 using System.Collections.Generic;
+using NetStack.Unsafe;
 
 namespace ImperialStudio.Core.Networking.Packets
 {
-    public sealed class OutgoingPacket
+    public class OutgoingPacket
     {
         public IEnumerable<NetworkPeer> Peers { get; set; }
         public PacketType PacketType { get; set; }
