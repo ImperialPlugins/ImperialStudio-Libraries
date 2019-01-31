@@ -6,8 +6,8 @@ using ImperialStudio.Core.Game;
 using ImperialStudio.Core.Logging;
 using ImperialStudio.Core.Map;
 using ImperialStudio.Core.Networking.Events;
-using ImperialStudio.Core.Networking.Packets.Serialization;
 using ImperialStudio.Core.Networking.Server;
+using ImperialStudio.Core.Serialization;
 using ImperialStudio.Core.Steam;
 
 namespace ImperialStudio.Core.Networking.Packets.Handlers
@@ -19,15 +19,17 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
         private readonly IMapManager m_MapManager;
         private readonly ILogger m_Logger;
         private readonly Dictionary<ulong, NetworkPeer> m_PendingAuthentications;
+        private readonly IEventBus m_EventBus;
 
         public AuthenticateHandler(
-            IPacketSerializer packetSerializer,
+            IObjectSerializer packetSerializer,
             IGamePlatformAccessor gamePlatformAccessor,
             IConnectionHandler connectionHandler,
             IEventBus eventBus,
             IMapManager mapManager,
             ILogger logger) : base(packetSerializer, gamePlatformAccessor, connectionHandler, logger)
         {
+            m_EventBus = eventBus;
             m_ServerConnectionHandler = connectionHandler as ServerConnectionHandler;
             m_MapManager = mapManager;
             m_Logger = logger;
@@ -74,6 +76,8 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
 
             var mapPacket = new MapChangePacket { MapName = m_MapManager.CurrentMap };
             m_ServerConnectionHandler.Send(peer, mapPacket);
+
+            m_EventBus.Emit(this, new PeerAuthenicatedEvent(peer));
         }
 
         private void HandleNetworkEvent(object sender, NetworkEvent @event)
@@ -95,7 +99,8 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
         {
             m_Logger.LogDebug("Received authentication request from user: " + incomingPacket.SteamId);
             m_PendingAuthentications.Add(incomingPacket.SteamId, sender);
-        
+            sender.Username = incomingPacket.Username;
+
             if (!SteamServerComponent.Instance.Server.Auth.StartSession(incomingPacket.Ticket, incomingPacket.SteamId))
             {
                 m_ServerConnectionHandler.Disconnect(sender, "Could not initialize Steam authentication session.");

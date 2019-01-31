@@ -15,6 +15,8 @@ namespace ImperialStudio.Core.Networking
         public ulong SteamId { get; set; }
         public TimeSpan Ping { get; set; }
 
+        public string Username { get; set; }
+
         public string Name => $"Peer #{EnetPeer.ID} (Steam: {SteamId})";
 
         public override string ToString() => Name;

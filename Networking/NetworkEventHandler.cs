@@ -34,6 +34,7 @@ namespace ImperialStudio.Core.Networking
             RegisterPacketHandler<PongHandler>();
             RegisterPacketHandler<MapChangeHandler>();
             RegisterPacketHandler<TerminateHandler>();
+            RegisterPacketHandler<WorldUpdateHandler>();
 
             m_Inited = true;
         }

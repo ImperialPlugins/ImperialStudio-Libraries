@@ -13,6 +13,8 @@ namespace ImperialStudio.Core.Networking
         void Flush();
 
         IEnumerable<NetworkPeer> GetPeers();
+        IEnumerable<NetworkPeer> GetPendingPeers();
+
         void RegisterPeer(NetworkPeer networkPeer);
         void UnregisterPeer(NetworkPeer networkPeer);
 

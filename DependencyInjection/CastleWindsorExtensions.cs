@@ -10,18 +10,24 @@ namespace ImperialStudio.Core.DependencyInjection
     {
         public static T Activate<T>(this IWindsorContainer container, params object[] args) where T : class
         {
-            var constructors = typeof(T).GetConstructors(BindingFlags.Instance | BindingFlags.Public);
+            return (T) Activate(container, typeof(T), args);
+        }
+
+        public static object Activate(this IWindsorContainer container, Type type, params object[] args)
+        {
+            var constructors = type.GetConstructors(BindingFlags.Instance | BindingFlags.Public);
 
             foreach (var constructor in constructors)
             {
-                if (TryActivate(constructor, container, args, out T result))
+                if (TryActivate(constructor, container, args, out object result))
                     return result;
             }
 
             throw new Exception("Activation failed; no matching constructor was found");
         }
 
-        private static bool TryActivate<T>(ConstructorInfo c, IWindsorContainer container, object[] args, out T result) where T : class
+
+        private static bool TryActivate(ConstructorInfo c, IWindsorContainer container, object[] args, out object result)
         {
             result = null;
 
@@ -68,7 +74,7 @@ namespace ImperialStudio.Core.DependencyInjection
                 parameters.Add(container.Resolve(type));
             }
 
-            result = (T)Activator.CreateInstance(typeof(T), parameters.ToArray());
+            result = Activator.CreateInstance(c.DeclaringType, parameters.ToArray());
             return true;
         }
     }

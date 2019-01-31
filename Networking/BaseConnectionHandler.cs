@@ -6,12 +6,12 @@ using ImperialStudio.Core.Logging;
 using ImperialStudio.Core.Networking.Events;
 using ImperialStudio.Core.Networking.Packets;
 using ImperialStudio.Core.Networking.Packets.Handlers;
-using ImperialStudio.Core.Networking.Packets.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using ImperialStudio.Core.Serialization;
 using Event = ENet.Event;
 using EventType = ENet.EventType;
 using ILogger = ImperialStudio.Core.Logging.ILogger;
@@ -33,13 +33,13 @@ namespace ImperialStudio.Core.Networking
 
         public bool AutoFlush { get; set; } = true;
 
-        private readonly IPacketSerializer m_PacketSerializer;
+        private readonly IObjectSerializer m_PacketSerializer;
         private readonly INetworkEventHandler m_NetworkEventProcessor;
         private readonly ILogger m_Logger;
         private readonly IEventBus m_EventBus;
         private readonly IWindsorContainer m_Container;
 
-        protected BaseConnectionHandler(IPacketSerializer packetSerializer, INetworkEventHandler networkEventProcessor, ILogger logger, IEventBus eventBus, IWindsorContainer container)
+        protected BaseConnectionHandler(IObjectSerializer packetSerializer, INetworkEventHandler networkEventProcessor, ILogger logger, IEventBus eventBus)
         {
             eventBus.Subscribe<ApplicationQuitEvent>(this, (s, e) => { Dispose(); });
 
@@ -47,7 +47,6 @@ namespace ImperialStudio.Core.Networking
             m_PacketSerializer = packetSerializer;
             m_NetworkEventProcessor = networkEventProcessor;
             m_Logger = logger;
-            m_Container = container;
             m_OutgoingQueue = new Queue<OutgoingPacket>();
             m_ConnectedPeers = new List<NetworkPeer>();
         }
@@ -231,7 +230,12 @@ namespace ImperialStudio.Core.Networking
 
         public IEnumerable<NetworkPeer> GetPeers()
         {
-            return m_ConnectedPeers;
+            return m_ConnectedPeers.Where(d => d.IsAuthenticated);
+        }
+
+        public IEnumerable<NetworkPeer> GetPendingPeers()
+        {
+            return m_ConnectedPeers.Where(d => !d.IsAuthenticated);
         }
 
         public void RegisterPeer(NetworkPeer networkPeer)
@@ -246,12 +250,12 @@ namespace ImperialStudio.Core.Networking
 
         public NetworkPeer GetPeerByNetworkId(uint peerID)
         {
-            return m_ConnectedPeers.FirstOrDefault(d => d.EnetPeer.ID == peerID);
+            return GetPeers().FirstOrDefault(d => d.EnetPeer.ID == peerID);
         }
 
         public NetworkPeer GetPeerBySteamId(ulong steamId)
         {
-            return m_ConnectedPeers.FirstOrDefault(d => d.SteamId == steamId);
+            return GetPeers().FirstOrDefault(d => d.SteamId == steamId);
         }
     }
 }

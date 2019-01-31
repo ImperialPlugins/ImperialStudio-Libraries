@@ -11,5 +11,8 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
 
         [Index(1)]
         public virtual byte[] Ticket { get; set; }
+
+        [Index(2)]
+        public virtual string Username { get; set; }
     }
 }

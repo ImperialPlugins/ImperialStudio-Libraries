@@ -2,7 +2,7 @@
 using ImperialStudio.Core.Eventing;
 using ImperialStudio.Core.Game;
 using ImperialStudio.Core.Logging;
-using ImperialStudio.Core.Networking.Packets.Serialization;
+using ImperialStudio.Core.Serialization;
 
 namespace ImperialStudio.Core.Networking.Packets.Handlers
 {
@@ -11,7 +11,7 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
     {
         private readonly IEventBus m_EventBus;
 
-        public PongHandler(IEventBus eventBus, IPacketSerializer packetSerializer, IGamePlatformAccessor gamePlatformAccessor, IConnectionHandler connectionHandler, ILogger logger) : base(packetSerializer, gamePlatformAccessor, connectionHandler, logger)
+        public PongHandler(IEventBus eventBus, IObjectSerializer packetSerializer, IGamePlatformAccessor gamePlatformAccessor, IConnectionHandler connectionHandler, ILogger logger) : base(packetSerializer, gamePlatformAccessor, connectionHandler, logger)
         {
             m_EventBus = eventBus;
         }

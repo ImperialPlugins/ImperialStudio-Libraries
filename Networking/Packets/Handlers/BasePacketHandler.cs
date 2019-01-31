@@ -1,9 +1,9 @@
 ﻿using ImperialStudio.Core.Game;
 using ImperialStudio.Core.Logging;
 using ImperialStudio.Core.Networking.Client;
-using ImperialStudio.Core.Networking.Packets.Serialization;
 using System;
 using System.Linq;
+using ImperialStudio.Core.Serialization;
 
 namespace ImperialStudio.Core.Networking.Packets.Handlers
 {
@@ -29,7 +29,7 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
         }
 
         protected BasePacketHandler(
-            IPacketSerializer packetSerializer,
+            IObjectSerializer packetSerializer,
             IGamePlatformAccessor gamePlatformAccessor,
             IConnectionHandler connectionHandler,
             ILogger logger)
@@ -46,14 +46,14 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
 
     public abstract class BasePacketHandler : IPacketHandler
     {
-        protected IPacketSerializer PacketSerializer { get; }
+        protected IObjectSerializer PacketSerializer { get; }
         public PacketType PacketType { get; }
 
         private readonly IGamePlatformAccessor m_GamePlatformAccessor;
         private readonly IConnectionHandler m_ConnectionHandler;
         private readonly ILogger m_Logger;
 
-        protected BasePacketHandler(IPacketSerializer packetSerializer, IGamePlatformAccessor gamePlatformAccessor,
+        protected BasePacketHandler(IObjectSerializer packetSerializer, IGamePlatformAccessor gamePlatformAccessor,
             IConnectionHandler connectionHandler,
             ILogger logger)
         {

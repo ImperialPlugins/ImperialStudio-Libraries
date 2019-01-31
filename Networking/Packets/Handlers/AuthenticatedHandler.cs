@@ -1,6 +1,6 @@
 ﻿using ImperialStudio.Core.Game;
 using ImperialStudio.Core.Logging;
-using ImperialStudio.Core.Networking.Packets.Serialization;
+using ImperialStudio.Core.Serialization;
 
 namespace ImperialStudio.Core.Networking.Packets.Handlers
 {
@@ -11,7 +11,7 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
         private readonly ILogger m_Logger;
 
         public AuthenticatedHandler(
-            IPacketSerializer packetSerializer,
+            IObjectSerializer packetSerializer,
             IGamePlatformAccessor gamePlatformAccessor,
             IConnectionHandler connectionHandler,
             ILogger logger) : base(packetSerializer, gamePlatformAccessor, connectionHandler, logger)

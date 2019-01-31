@@ -5,5 +5,6 @@
         string CurrentMap { get; }
 
         void ChangeMap(string mapName);
+        void GoToMainMenu();
     }
 }

@@ -1,7 +1,7 @@
 ﻿using ImperialStudio.Core.Game;
 using ImperialStudio.Core.Logging;
 using ImperialStudio.Core.Networking.Client;
-using ImperialStudio.Core.Networking.Packets.Serialization;
+using ImperialStudio.Core.Serialization;
 
 namespace ImperialStudio.Core.Networking.Packets.Handlers
 {
@@ -10,7 +10,7 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
     {
         private readonly IConnectionHandler m_ConnectionHandler;
 
-        public TerminateHandler(IPacketSerializer packetSerializer, IGamePlatformAccessor gamePlatformAccessor, IConnectionHandler connectionHandler, ILogger logger) : base(packetSerializer, gamePlatformAccessor, connectionHandler, logger)
+        public TerminateHandler(IObjectSerializer packetSerializer, IGamePlatformAccessor gamePlatformAccessor, IConnectionHandler connectionHandler, ILogger logger) : base(packetSerializer, gamePlatformAccessor, connectionHandler, logger)
         {
             m_ConnectionHandler = connectionHandler;
         }
@@ -18,6 +18,7 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
         protected override void OnHandleVerifiedPacket(NetworkPeer sender, TerminatePacket incomingPacket)
         {
             var clientConnection = (ClientConnectionHandler) m_ConnectionHandler;
+            clientConnection.PendingTerminate = true;
             clientConnection.Disconnect();
         }
     }

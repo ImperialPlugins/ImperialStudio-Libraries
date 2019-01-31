@@ -5,25 +5,35 @@ using ImperialStudio.Core.Eventing;
 using ImperialStudio.Core.Logging;
 using ImperialStudio.Core.Networking.Events;
 using ImperialStudio.Core.Networking.Packets.Handlers;
-using ImperialStudio.Core.Networking.Packets.Serialization;
 using ImperialStudio.Core.Steam;
 using System;
+using ImperialStudio.Core.Map;
+using ImperialStudio.Core.Serialization;
 using ILogger = ImperialStudio.Core.Logging.ILogger;
 
 namespace ImperialStudio.Core.Networking.Client
 {
     public sealed class ClientConnectionHandler : BaseConnectionHandler
     {
-        public ClientConnectionHandler(IPacketSerializer packetSerializer, INetworkEventHandler networkEventProcessor, ILogger logger, IEventBus eventBus, IWindsorContainer container) : base(packetSerializer, networkEventProcessor, logger, eventBus, container)
+        public ClientConnectionHandler(
+            IObjectSerializer packetSerializer, 
+            INetworkEventHandler networkEventProcessor, 
+            ILogger logger, 
+            IEventBus eventBus, 
+            IMapManager mMapManager) : base(packetSerializer, networkEventProcessor, logger, eventBus)
         {
             m_Logger = logger;
+            m_MapManager = mMapManager;
             eventBus.Subscribe<NetworkEvent>(this, HandleNetworkEvent);
         }
 
         private readonly ILogger m_Logger;
+        private readonly IMapManager m_MapManager;
+
         private Auth.Ticket m_AuthTicket;
         private bool m_ConnectingToServer;
         public NetworkPeer ServerPeer { get; private set; }
+        public bool PendingTerminate { get; set; }
 
         private void SetSessionAuthTicket(Auth.Ticket ticket)
         {
@@ -69,13 +79,14 @@ namespace ImperialStudio.Core.Networking.Client
         {
             var clientId = SteamClientComponent.Instance.Client.SteamId;
             var ticket = SteamClientComponent.Instance.Client.Auth.GetAuthSessionTicket();
-
+            var userName = SteamClientComponent.Instance.Client.Username;
             SetSessionAuthTicket(ticket);
 
             Send(ServerPeer, new AuthenticatePacket
             {
                 SteamId = clientId,
-                Ticket = ticket.Data
+                Ticket = ticket.Data,
+                Username = userName
             });
         }
 
@@ -89,22 +100,30 @@ namespace ImperialStudio.Core.Networking.Client
 
         private void HandleNetworkEvent(object sender, NetworkEvent @event)
         {
-            if (@event.EnetEvent.Type != EventType.Connect)
-                return;
-
-            if (!m_ConnectingToServer)
-                return; //handle other peers
-
-            if (ServerPeer == null)
+            if (@event.EnetEvent.Type == EventType.Disconnect)
             {
-                throw new Exception("Failed to get server peer");
+                if (!PendingTerminate)
+                    m_MapManager.GoToMainMenu();
+
+                PendingTerminate = true;
             }
 
-            m_Logger.LogInformation($"Connected to server: {ServerPeer.EnetPeer.IP}:{ServerPeer.EnetPeer.Port}");
-            m_Host.PreventConnections(true);
+            if (@event.EnetEvent.Type == EventType.Connect)
+            {
+                if (!m_ConnectingToServer)
+                    return; //handle other peers
 
-            InitializeAuthentication();
-            m_ConnectingToServer = false;
+                if (ServerPeer == null)
+                {
+                    throw new Exception("Failed to get server peer");
+                }
+
+                m_Logger.LogInformation($"Connected to server: {ServerPeer.EnetPeer.IP}:{ServerPeer.EnetPeer.Port}");
+                m_Host.PreventConnections(true);
+
+                InitializeAuthentication();
+                m_ConnectingToServer = false;
+            }
         }
 
         public void Disconnect()

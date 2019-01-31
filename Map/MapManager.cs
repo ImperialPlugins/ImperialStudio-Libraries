@@ -24,5 +24,10 @@ namespace ImperialStudio.Core.Map
             MapChangeEvent mapChange = new MapChangeEvent(mapName);
             m_EventBus.Emit(this, mapChange);
         }
+
+        public void GoToMainMenu()
+        {
+            ChangeMap("MainMenu");
+        }
     }
 }
