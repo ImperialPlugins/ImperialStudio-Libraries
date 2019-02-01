@@ -1,12 +1,13 @@
-﻿using System;
+﻿using ImperialStudio.Core.Api.Eventing;
+using ImperialStudio.Core.Api.Scheduling;
+using ImperialStudio.Core.DependencyInjection;
+using ImperialStudio.Core.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Castle.Windsor;
-using ImperialStudio.Core.DependencyInjection;
-using ImperialStudio.Core.Eventing;
-using ImperialStudio.Core.Logging;
+using System.Threading;
 using UnityEngine;
-using ILogger = ImperialStudio.Core.Logging.ILogger;
+using ILogger = ImperialStudio.Core.Api.Logging.ILogger;
 
 namespace ImperialStudio.Core.Scheduling
 {
@@ -23,9 +24,11 @@ namespace ImperialStudio.Core.Scheduling
         private IEventBus m_EventBus { get; set; }
 
         private readonly List<ITask> m_Tasks = new List<ITask>();
+        private Thread m_MainThread;
 
         protected virtual void Awake()
         {
+            m_MainThread = Thread.CurrentThread;
             (new AsyncThreadPool(this)).Start();
         }
 
@@ -55,6 +58,22 @@ namespace ImperialStudio.Core.Scheduling
             });
 
             return task;
+        }
+
+        public ITask RunOnMainThread(object owner, Action action, string taskName)
+        {
+            if (IsMainThread())
+            {
+                action();
+                return null;
+            }
+
+            return ScheduleUpdate(owner, action, taskName, ExecutionTargetContext.NextFrame);
+        }
+
+        private bool IsMainThread()
+        {
+            return m_MainThread == Thread.CurrentThread;
         }
 
         public virtual void TriggerEvent(UnityTask task, EventCallback cb = null)
@@ -121,7 +140,7 @@ namespace ImperialStudio.Core.Scheduling
             var cpy = Tasks.ToList(); // we need a copy because the task list may be modified at runtime
             foreach (ITask task in cpy.Where(c => !c.IsFinished && !c.IsCancelled))
             {
-                if(task.Period == null || (task.Period != null  && task.ExecutionTarget != ExecutionTargetContext.Sync)) 
+                if (task.Period == null || (task.Period != null && task.ExecutionTarget != ExecutionTargetContext.Sync))
                     if (task.ExecutionTarget != ExecutionTargetContext.EveryFrame
                         && task.ExecutionTarget != ExecutionTargetContext.NextFrame)
                         continue;
@@ -156,8 +175,8 @@ namespace ImperialStudio.Core.Scheduling
             }
 
             if (task.Period != null
-                && ((UnityTask) task).LastRunTime != null
-                && DateTime.Now - ((UnityTask) task).LastRunTime < task.Period)
+                && ((UnityTask)task).LastRunTime != null
+                && DateTime.Now - ((UnityTask)task).LastRunTime < task.Period)
                 return;
 
             try

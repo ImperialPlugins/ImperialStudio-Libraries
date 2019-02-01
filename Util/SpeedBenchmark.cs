@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using ImperialStudio.Core.Api.Logging;
 using ImperialStudio.Core.Logging;
 
 namespace ImperialStudio.Core.Util

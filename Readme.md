@@ -13,9 +13,10 @@ Some code was burrowed from my contributions to [RocketMod](https://github.com/R
 All other published source code is for educational purposes only and may not be used in commercial projects.
 
 ## Dependencies
-* Castle.Windsor
-* Castle.Core
-* ENet-CSharp
-* Facepunch.Steamworks
-* NetStack
-* ZeroFormatter
+* [Castle.Windsor](https://github.com/castleproject/Windsor)
+* [Castle.Core](https://github.com/castleproject/Core)
+* [ENet-CSharp](https://github.com/nxrighthere/ENet-CSharp)
+* [Facepunch.Steamworks](https://github.com/Facepunch/Facepunch.Steamworks)
+* [NetStack](https://github.com/nxrighthere/NetStack)
+* [ZeroFormatter](https://github.com/neuecc/ZeroFormatter)
+* [Disruptor for Unity](https://github.com/dave-hillier/disruptor-unity3d)

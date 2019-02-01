@@ -1,12 +1,12 @@
-﻿using ENet;
-using ImperialStudio.Core.Eventing;
-using ImperialStudio.Core.Game;
-using ImperialStudio.Core.Logging;
-using ImperialStudio.Core.Serialization;
+﻿using ImperialStudio.Core.Api.Eventing;
+using ImperialStudio.Core.Api.Game;
+using ImperialStudio.Core.Api.Logging;
+using ImperialStudio.Core.Api.Networking;
+using ImperialStudio.Core.Api.Serialization;
 
 namespace ImperialStudio.Core.Networking.Packets.Handlers
 {
-    [PacketType(PacketType.Pong)]
+    [PacketType(Packets.PacketType.Pong)]
     public class PongHandler : BasePacketHandler<PongPacket>
     {
         private readonly IEventBus m_EventBus;
@@ -16,7 +16,7 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
             m_EventBus = eventBus;
         }
 
-        protected override void OnHandleVerifiedPacket(NetworkPeer sender, PongPacket incomingPacket)
+        protected override void OnHandleVerifiedPacket(INetworkPeer sender, PongPacket incomingPacket)
         {
             m_EventBus.Emit(this, new PongEvent(sender, incomingPacket));
         }

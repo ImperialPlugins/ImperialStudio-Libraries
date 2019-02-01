@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Castle.Windsor;
+using ImperialStudio.Core.Api.Logging;
 using ImperialStudio.Core.Reflection;
 using UnityEngine;
+using ILogger = ImperialStudio.Core.Api.Logging.ILogger;
 
 namespace ImperialStudio.Core.Logging
 {
-    public abstract class BaseLogger : ILogger
+    public abstract class BaseLogger : Api.Logging.ILogger
     {
         private static readonly ICollection<Type> ignoredLoggingTypes = new HashSet<Type>
         {

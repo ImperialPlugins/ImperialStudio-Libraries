@@ -1,12 +1,12 @@
-﻿using ENet;
-using ImperialStudio.Core.Eventing;
-using ImperialStudio.Core.Game;
-using ImperialStudio.Core.Logging;
-using ImperialStudio.Core.Serialization;
+﻿using ImperialStudio.Core.Api.Eventing;
+using ImperialStudio.Core.Api.Game;
+using ImperialStudio.Core.Api.Logging;
+using ImperialStudio.Core.Api.Networking;
+using ImperialStudio.Core.Api.Serialization;
 
 namespace ImperialStudio.Core.Networking.Packets.Handlers
 {
-    [PacketType(PacketType.Ping)]
+    [PacketType(Packets.PacketType.Ping)]
     public class PingHandler : BasePacketHandler<PingPacket>
     {
         private readonly IEventBus m_EventBus;
@@ -19,7 +19,7 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
             m_ConnectionHandler = connectionHandler;
         }
 
-        protected override void OnHandleVerifiedPacket(NetworkPeer sender, PingPacket incomingPacket)
+        protected override void OnHandleVerifiedPacket(INetworkPeer sender, PingPacket incomingPacket)
         {
             var @event = new PingEvent(sender, incomingPacket);
             m_EventBus.Emit(this, @event);

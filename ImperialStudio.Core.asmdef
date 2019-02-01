@@ -1,0 +1,23 @@
+{
+    "name": "ImperialStudio.Core",
+    "references": [
+        "ImperialStudio.Core.Api",
+        "NetStack"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Castle.Core.dll",
+        "Castle.Windsor.dll",
+        "Facepunch.Steamworks.dll",
+        "Microsoft.CSharp.dll",
+        "ZeroFormatter.dll",
+        "ZeroFormatter.Interfaces.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}

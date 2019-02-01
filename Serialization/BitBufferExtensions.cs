@@ -15,7 +15,7 @@ namespace ImperialStudio.Core.Serialization
             bytes[2] = @this.ReadByte();
             bytes[3] = @this.ReadByte();
 
-            return Convert.ToSingle(bytes);
+            return BitConverter.ToSingle(bytes, 0);
         }
 
         public static void AddSingle(this BitBuffer @this, float value)

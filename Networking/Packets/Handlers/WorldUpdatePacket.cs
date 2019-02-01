@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using ImperialStudio.Core.Api.Entities;
+using ImperialStudio.Core.Api.Networking.Packets;
 using ImperialStudio.Core.Entities;
 using ZeroFormatter;
 
@@ -12,10 +14,10 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
         public virtual IEnumerable<WorldSpawn> Spawns { get; set; }
 
         [Index(1)]
-        public virtual IDictionary<ushort, byte[]> EntityStates { get; set; }
+        public virtual IDictionary<int, byte[]> EntityStates { get; set; }
 
         [Index(2)]
-        public virtual ushort[] Despawns { get; set; }
+        public virtual IEnumerable<int> Despawns { get; set; }
     }
 
     [ZeroFormattable]
@@ -24,7 +26,7 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
         public WorldSpawn(IEntity entity)
         {
             Id = entity.Id;
-            Type = entity.GetType().FullName;
+            Type = entity.GetType().AssemblyQualifiedName;
         }
 
         public WorldSpawn()
@@ -33,9 +35,12 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
         }
 
         [Index(0)]
-        public virtual ushort Id { get; set; }
+        public virtual int Id { get; set; }
 
         [Index(1)]
         public virtual string Type { get; set; }
+
+        [Index(2)]
+        public virtual bool IsOwner { get; set; }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using ImperialStudio.Core.Api.Eventing;
 
 namespace ImperialStudio.Core.Eventing
 {

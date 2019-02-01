@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using Castle.Windsor;
+using ImperialStudio.Core.Api.Logging;
 using ImperialStudio.Core.Reflection;
 
 namespace ImperialStudio.Core.Logging

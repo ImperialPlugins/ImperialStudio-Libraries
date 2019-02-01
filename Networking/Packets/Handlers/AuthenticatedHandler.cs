@@ -1,13 +1,14 @@
-﻿using ImperialStudio.Core.Game;
+﻿using ImperialStudio.Core.Api.Game;
+using ImperialStudio.Core.Api.Logging;
+using ImperialStudio.Core.Api.Networking;
+using ImperialStudio.Core.Api.Serialization;
 using ImperialStudio.Core.Logging;
-using ImperialStudio.Core.Serialization;
 
 namespace ImperialStudio.Core.Networking.Packets.Handlers
 {
-    [PacketType(PacketType.Authenticated)]
+    [PacketType(Packets.PacketType.Authenticated)]
     public class AuthenticatedHandler : BasePacketHandler
     {
-        private readonly IConnectionHandler m_ConnectionHandler;
         private readonly ILogger m_Logger;
 
         public AuthenticatedHandler(
@@ -16,7 +17,6 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
             IConnectionHandler connectionHandler,
             ILogger logger) : base(packetSerializer, gamePlatformAccessor, connectionHandler, logger)
         {
-            m_ConnectionHandler = connectionHandler;
             m_Logger = logger;
         }
 

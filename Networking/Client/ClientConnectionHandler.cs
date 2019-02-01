@@ -1,15 +1,20 @@
 ﻿using Castle.Windsor;
 using ENet;
 using Facepunch.Steamworks;
-using ImperialStudio.Core.Eventing;
 using ImperialStudio.Core.Logging;
 using ImperialStudio.Core.Networking.Events;
 using ImperialStudio.Core.Networking.Packets.Handlers;
 using ImperialStudio.Core.Steam;
 using System;
+using ImperialStudio.Core.Api.Eventing;
+using ImperialStudio.Core.Api.Map;
+using ImperialStudio.Core.Api.Networking;
+using ImperialStudio.Core.Api.Scheduling;
+using ImperialStudio.Core.Api.Serialization;
 using ImperialStudio.Core.Map;
+using ImperialStudio.Core.Scheduling;
 using ImperialStudio.Core.Serialization;
-using ILogger = ImperialStudio.Core.Logging.ILogger;
+using ILogger = ImperialStudio.Core.Api.Logging.ILogger;
 
 namespace ImperialStudio.Core.Networking.Client
 {
@@ -17,21 +22,26 @@ namespace ImperialStudio.Core.Networking.Client
     {
         public ClientConnectionHandler(
             IObjectSerializer packetSerializer, 
-            INetworkEventHandler networkEventProcessor, 
+            Api.Networking.IIncomingNetworkEventHandler networkEventProcessor, 
             ILogger logger, 
             IEventBus eventBus, 
-            IMapManager mMapManager) : base(packetSerializer, networkEventProcessor, logger, eventBus)
+            ITaskScheduler scheduler,
+            IMapManager mapManager) : base(packetSerializer, networkEventProcessor, logger, eventBus)
         {
             m_Logger = logger;
-            m_MapManager = mMapManager;
-            eventBus.Subscribe<NetworkEvent>(this, HandleNetworkEvent);
+            m_Scheduler = scheduler;
+            m_MapManager = mapManager;
+            eventBus.Subscribe<NetworkEvent>(this, OnNetworkEvent);
         }
 
         private readonly ILogger m_Logger;
+        private readonly ITaskScheduler m_Scheduler;
         private readonly IMapManager m_MapManager;
 
         private Auth.Ticket m_AuthTicket;
         private bool m_ConnectingToServer;
+        private Host m_Host;
+
         public NetworkPeer ServerPeer { get; private set; }
         public bool PendingTerminate { get; set; }
 
@@ -63,8 +73,8 @@ namespace ImperialStudio.Core.Networking.Client
                 throw new Exception("Client is already connected.");
             }
 
-            var host = GetOrCreateHost();
-            host.Create();
+            m_Host = GetOrCreateHost();
+            m_Host.Create();
 
             StartListening();
 
@@ -98,12 +108,14 @@ namespace ImperialStudio.Core.Networking.Client
             m_AuthTicket = null;
         }
 
-        private void HandleNetworkEvent(object sender, NetworkEvent @event)
+        private void OnNetworkEvent(object sender, NetworkEvent @event)
         {
-            if (@event.EnetEvent.Type == EventType.Disconnect)
+            if (@event.EnetEvent.Type == EventType.Disconnect || @event.EnetEvent.Type == EventType.Timeout)
             {
                 if (!PendingTerminate)
-                    m_MapManager.GoToMainMenu();
+                {
+                    m_Scheduler.ScheduleUpdate(this, ()=> m_MapManager.GoToMainMenu(), "HandleNetworkEvent->GoToMainMenu", ExecutionTargetContext.NextFrame);
+                }
 
                 PendingTerminate = true;
             }
@@ -118,7 +130,7 @@ namespace ImperialStudio.Core.Networking.Client
                     throw new Exception("Failed to get server peer");
                 }
 
-                m_Logger.LogInformation($"Connected to server: {ServerPeer.EnetPeer.IP}:{ServerPeer.EnetPeer.Port}");
+                m_Logger.LogInformation($"Connected to server: {ServerPeer.Ip}:{ServerPeer.Port}");
                 m_Host.PreventConnections(true);
 
                 InitializeAuthentication();

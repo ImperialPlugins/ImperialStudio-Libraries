@@ -1,5 +1,6 @@
 ﻿using System;
 using Castle.Windsor;
+using ImperialStudio.Core.Api.Logging;
 using ImperialStudio.Core.Reflection;
 using UnityEngine;
 

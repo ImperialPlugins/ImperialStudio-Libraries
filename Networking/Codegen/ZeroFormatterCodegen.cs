@@ -36,8 +36,9 @@ namespace ZeroFormatter
             // Structs
             // Unions
             // Generics
-            ZeroFormatter.Formatters.Formatter.RegisterDictionary<ZeroFormatter.Formatters.DefaultResolver, ushort, byte[]>();
+            ZeroFormatter.Formatters.Formatter.RegisterDictionary<ZeroFormatter.Formatters.DefaultResolver, int, byte[]>();
             ZeroFormatter.Formatters.Formatter.RegisterEnumerable<ZeroFormatter.Formatters.DefaultResolver, global::ImperialStudio.Core.Networking.Packets.Handlers.WorldSpawn>();
+            ZeroFormatter.Formatters.Formatter.RegisterEnumerable<ZeroFormatter.Formatters.DefaultResolver, int>();
         }
     }
 }
@@ -673,11 +674,12 @@ namespace ZeroFormatter.DynamicObjectSegments.ImperialStudio.Core.Networking.Pac
             {
                 var startOffset = offset;
 
-                offset += (8 + 4 * (1 + 1));
-                offset += ObjectSegmentHelper.SerializeFromFormatter<TTypeResolver, ushort>(ref bytes, startOffset, offset, 0, value.Id);
+                offset += (8 + 4 * (2 + 1));
+                offset += ObjectSegmentHelper.SerializeFromFormatter<TTypeResolver, int>(ref bytes, startOffset, offset, 0, value.Id);
                 offset += ObjectSegmentHelper.SerializeFromFormatter<TTypeResolver, string>(ref bytes, startOffset, offset, 1, value.Type);
+                offset += ObjectSegmentHelper.SerializeFromFormatter<TTypeResolver, bool>(ref bytes, startOffset, offset, 2, value.IsOwner);
 
-                return ObjectSegmentHelper.WriteSize(ref bytes, startOffset, offset, 1);
+                return ObjectSegmentHelper.WriteSize(ref bytes, startOffset, offset, 2);
             }
         }
 
@@ -696,7 +698,7 @@ namespace ZeroFormatter.DynamicObjectSegments.ImperialStudio.Core.Networking.Pac
     public class WorldSpawnObjectSegment<TTypeResolver> : global::ImperialStudio.Core.Networking.Packets.Handlers.WorldSpawn, IZeroFormatterSegment
         where TTypeResolver : ITypeResolver, new()
     {
-        static readonly int[] __elementSizes = new int[]{ 2, 0 };
+        static readonly int[] __elementSizes = new int[]{ 4, 0, 1 };
 
         readonly ArraySegment<byte> __originalBytes;
         readonly global::ZeroFormatter.DirtyTracker __tracker;
@@ -706,15 +708,15 @@ namespace ZeroFormatter.DynamicObjectSegments.ImperialStudio.Core.Networking.Pac
         CacheSegment<TTypeResolver, string> _Type;
 
         // 0
-        public override ushort Id
+        public override int Id
         {
             get
             {
-                return ObjectSegmentHelper.GetFixedProperty<TTypeResolver, ushort>(__originalBytes, 0, __binaryLastIndex, __extraFixedBytes, __tracker);
+                return ObjectSegmentHelper.GetFixedProperty<TTypeResolver, int>(__originalBytes, 0, __binaryLastIndex, __extraFixedBytes, __tracker);
             }
             set
             {
-                ObjectSegmentHelper.SetFixedProperty<TTypeResolver, ushort>(__originalBytes, 0, __binaryLastIndex, __extraFixedBytes, value, __tracker);
+                ObjectSegmentHelper.SetFixedProperty<TTypeResolver, int>(__originalBytes, 0, __binaryLastIndex, __extraFixedBytes, value, __tracker);
             }
         }
 
@@ -731,6 +733,19 @@ namespace ZeroFormatter.DynamicObjectSegments.ImperialStudio.Core.Networking.Pac
             }
         }
 
+        // 2
+        public override bool IsOwner
+        {
+            get
+            {
+                return ObjectSegmentHelper.GetFixedProperty<TTypeResolver, bool>(__originalBytes, 2, __binaryLastIndex, __extraFixedBytes, __tracker);
+            }
+            set
+            {
+                ObjectSegmentHelper.SetFixedProperty<TTypeResolver, bool>(__originalBytes, 2, __binaryLastIndex, __extraFixedBytes, value, __tracker);
+            }
+        }
+
 
         public WorldSpawnObjectSegment(global::ZeroFormatter.DirtyTracker dirtyTracker, ArraySegment<byte> originalBytes)
         {
@@ -740,7 +755,7 @@ namespace ZeroFormatter.DynamicObjectSegments.ImperialStudio.Core.Networking.Pac
             this.__tracker = dirtyTracker = dirtyTracker.CreateChild();
             this.__binaryLastIndex = BinaryUtil.ReadInt32(ref __array, originalBytes.Offset + 4);
 
-            this.__extraFixedBytes = ObjectSegmentHelper.CreateExtraFixedBytes(this.__binaryLastIndex, 1, __elementSizes);
+            this.__extraFixedBytes = ObjectSegmentHelper.CreateExtraFixedBytes(this.__binaryLastIndex, 2, __elementSizes);
 
             _Type = new CacheSegment<TTypeResolver, string>(__tracker, ObjectSegmentHelper.GetSegment(originalBytes, 1, __binaryLastIndex, __tracker));
         }
@@ -760,12 +775,13 @@ namespace ZeroFormatter.DynamicObjectSegments.ImperialStudio.Core.Networking.Pac
             if (__extraFixedBytes != null || __tracker.IsDirty)
             {
                 var startOffset = offset;
-                offset += (8 + 4 * (1 + 1));
+                offset += (8 + 4 * (2 + 1));
 
-                offset += ObjectSegmentHelper.SerializeFixedLength<TTypeResolver, ushort>(ref targetBytes, startOffset, offset, 0, __binaryLastIndex, __originalBytes, __extraFixedBytes, __tracker);
+                offset += ObjectSegmentHelper.SerializeFixedLength<TTypeResolver, int>(ref targetBytes, startOffset, offset, 0, __binaryLastIndex, __originalBytes, __extraFixedBytes, __tracker);
                 offset += ObjectSegmentHelper.SerializeCacheSegment<TTypeResolver, string>(ref targetBytes, startOffset, offset, 1, ref _Type);
+                offset += ObjectSegmentHelper.SerializeFixedLength<TTypeResolver, bool>(ref targetBytes, startOffset, offset, 2, __binaryLastIndex, __originalBytes, __extraFixedBytes, __tracker);
 
-                return ObjectSegmentHelper.WriteSize(ref targetBytes, startOffset, offset, 1);
+                return ObjectSegmentHelper.WriteSize(ref targetBytes, startOffset, offset, 2);
             }
             else
             {
@@ -800,8 +816,8 @@ namespace ZeroFormatter.DynamicObjectSegments.ImperialStudio.Core.Networking.Pac
 
                 offset += (8 + 4 * (2 + 1));
                 offset += ObjectSegmentHelper.SerializeFromFormatter<TTypeResolver, global::System.Collections.Generic.IEnumerable<global::ImperialStudio.Core.Networking.Packets.Handlers.WorldSpawn>>(ref bytes, startOffset, offset, 0, value.Spawns);
-                offset += ObjectSegmentHelper.SerializeFromFormatter<TTypeResolver, global::System.Collections.Generic.IDictionary<ushort, byte[]>>(ref bytes, startOffset, offset, 1, value.EntityStates);
-                offset += ObjectSegmentHelper.SerializeFromFormatter<TTypeResolver, ushort[]>(ref bytes, startOffset, offset, 2, value.Despawns);
+                offset += ObjectSegmentHelper.SerializeFromFormatter<TTypeResolver, global::System.Collections.Generic.IDictionary<int, byte[]>>(ref bytes, startOffset, offset, 1, value.EntityStates);
+                offset += ObjectSegmentHelper.SerializeFromFormatter<TTypeResolver, global::System.Collections.Generic.IEnumerable<int>>(ref bytes, startOffset, offset, 2, value.Despawns);
 
                 return ObjectSegmentHelper.WriteSize(ref bytes, startOffset, offset, 2);
             }
@@ -830,8 +846,8 @@ namespace ZeroFormatter.DynamicObjectSegments.ImperialStudio.Core.Networking.Pac
         readonly byte[] __extraFixedBytes;
 
         CacheSegment<TTypeResolver, global::System.Collections.Generic.IEnumerable<global::ImperialStudio.Core.Networking.Packets.Handlers.WorldSpawn>> _Spawns;
-        CacheSegment<TTypeResolver, global::System.Collections.Generic.IDictionary<ushort, byte[]>> _EntityStates;
-        CacheSegment<TTypeResolver, ushort[]> _Despawns;
+        CacheSegment<TTypeResolver, global::System.Collections.Generic.IDictionary<int, byte[]>> _EntityStates;
+        CacheSegment<TTypeResolver, global::System.Collections.Generic.IEnumerable<int>> _Despawns;
 
         // 0
         public override global::System.Collections.Generic.IEnumerable<global::ImperialStudio.Core.Networking.Packets.Handlers.WorldSpawn> Spawns
@@ -847,7 +863,7 @@ namespace ZeroFormatter.DynamicObjectSegments.ImperialStudio.Core.Networking.Pac
         }
 
         // 1
-        public override global::System.Collections.Generic.IDictionary<ushort, byte[]> EntityStates
+        public override global::System.Collections.Generic.IDictionary<int, byte[]> EntityStates
         {
             get
             {
@@ -860,7 +876,7 @@ namespace ZeroFormatter.DynamicObjectSegments.ImperialStudio.Core.Networking.Pac
         }
 
         // 2
-        public override ushort[] Despawns
+        public override global::System.Collections.Generic.IEnumerable<int> Despawns
         {
             get
             {
@@ -884,8 +900,8 @@ namespace ZeroFormatter.DynamicObjectSegments.ImperialStudio.Core.Networking.Pac
             this.__extraFixedBytes = ObjectSegmentHelper.CreateExtraFixedBytes(this.__binaryLastIndex, 2, __elementSizes);
 
             _Spawns = new CacheSegment<TTypeResolver, global::System.Collections.Generic.IEnumerable<global::ImperialStudio.Core.Networking.Packets.Handlers.WorldSpawn>>(__tracker, ObjectSegmentHelper.GetSegment(originalBytes, 0, __binaryLastIndex, __tracker));
-            _EntityStates = new CacheSegment<TTypeResolver, global::System.Collections.Generic.IDictionary<ushort, byte[]>>(__tracker, ObjectSegmentHelper.GetSegment(originalBytes, 1, __binaryLastIndex, __tracker));
-            _Despawns = new CacheSegment<TTypeResolver, ushort[]>(__tracker, ObjectSegmentHelper.GetSegment(originalBytes, 2, __binaryLastIndex, __tracker));
+            _EntityStates = new CacheSegment<TTypeResolver, global::System.Collections.Generic.IDictionary<int, byte[]>>(__tracker, ObjectSegmentHelper.GetSegment(originalBytes, 1, __binaryLastIndex, __tracker));
+            _Despawns = new CacheSegment<TTypeResolver, global::System.Collections.Generic.IEnumerable<int>>(__tracker, ObjectSegmentHelper.GetSegment(originalBytes, 2, __binaryLastIndex, __tracker));
         }
 
         public bool CanDirectCopy()
@@ -906,8 +922,8 @@ namespace ZeroFormatter.DynamicObjectSegments.ImperialStudio.Core.Networking.Pac
                 offset += (8 + 4 * (2 + 1));
 
                 offset += ObjectSegmentHelper.SerializeCacheSegment<TTypeResolver, global::System.Collections.Generic.IEnumerable<global::ImperialStudio.Core.Networking.Packets.Handlers.WorldSpawn>>(ref targetBytes, startOffset, offset, 0, ref _Spawns);
-                offset += ObjectSegmentHelper.SerializeCacheSegment<TTypeResolver, global::System.Collections.Generic.IDictionary<ushort, byte[]>>(ref targetBytes, startOffset, offset, 1, ref _EntityStates);
-                offset += ObjectSegmentHelper.SerializeCacheSegment<TTypeResolver, ushort[]>(ref targetBytes, startOffset, offset, 2, ref _Despawns);
+                offset += ObjectSegmentHelper.SerializeCacheSegment<TTypeResolver, global::System.Collections.Generic.IDictionary<int, byte[]>>(ref targetBytes, startOffset, offset, 1, ref _EntityStates);
+                offset += ObjectSegmentHelper.SerializeCacheSegment<TTypeResolver, global::System.Collections.Generic.IEnumerable<int>>(ref targetBytes, startOffset, offset, 2, ref _Despawns);
 
                 return ObjectSegmentHelper.WriteSize(ref targetBytes, startOffset, offset, 2);
             }

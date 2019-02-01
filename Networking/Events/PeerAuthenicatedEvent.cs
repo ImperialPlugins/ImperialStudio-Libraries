@@ -1,12 +1,13 @@
-﻿using ImperialStudio.Core.Eventing;
+﻿using ImperialStudio.Core.Api.Networking;
+using ImperialStudio.Core.Eventing;
 
 namespace ImperialStudio.Core.Networking.Events
 {
     public class PeerAuthenicatedEvent : Event
     {
-        public NetworkPeer NetworkPeer { get; }
+        public INetworkPeer NetworkPeer { get; }
 
-        public PeerAuthenicatedEvent(NetworkPeer networkPeer)
+        public PeerAuthenicatedEvent(INetworkPeer networkPeer)
         {
             NetworkPeer = networkPeer;
         }        

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Castle.Windsor;
+using ImperialStudio.Core.Api.Eventing;
+using ImperialStudio.Core.Api.Logging;
 using ImperialStudio.Core.Logging;
 using ImperialStudio.Core.Reflection;
 
@@ -28,7 +30,7 @@ namespace ImperialStudio.Core.Eventing
             _eventListeners.Add(new EventAction(@object, callback.Invoke, handler, new List<string> { eventName }));
         }
 
-        public void Subscribe<TEvent>(object @object, EventCallback<TEvent> callback) where TEvent : Event
+        public void Subscribe<TEvent>(object @object, EventCallback<TEvent> callback) where TEvent : IEvent
         {
             Subscribe(@object, typeof(TEvent), (s, e) => callback(s, (TEvent) e));
         }

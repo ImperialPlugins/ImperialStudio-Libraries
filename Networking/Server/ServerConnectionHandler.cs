@@ -1,21 +1,19 @@
 ﻿using ENet;
 using Facepunch.Steamworks;
-using ImperialStudio.Core.Entities;
-using ImperialStudio.Core.Eventing;
 using ImperialStudio.Core.Logging;
-using ImperialStudio.Core.Map;
 using ImperialStudio.Core.Networking.Events;
 using ImperialStudio.Core.Networking.Packets.Handlers;
-using ImperialStudio.Core.Serialization;
-using ImperialStudio.Core.Util;
-using NetStack.Serialization;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using ImperialStudio.Core.Api.Entities;
+using ImperialStudio.Core.Api.Eventing;
+using ImperialStudio.Core.Api.Map;
+using ImperialStudio.Core.Api.Networking;
+using ImperialStudio.Core.Api.Serialization;
 using UnityEngine;
 using EventType = ENet.EventType;
-using ILogger = ImperialStudio.Core.Logging.ILogger;
+using ILogger = ImperialStudio.Core.Api.Logging.ILogger;
 
 namespace ImperialStudio.Core.Networking.Server
 {
@@ -29,7 +27,7 @@ namespace ImperialStudio.Core.Networking.Server
 
         public ServerConnectionHandler(
             IObjectSerializer packetSerializer,
-            INetworkEventHandler networkEventProcessor,
+            Api.Networking.IIncomingNetworkEventHandler networkEventProcessor,
             ILogger logger,
             IEntityManager entityManager,
             IEventBus eventBus,
@@ -108,36 +106,40 @@ namespace ImperialStudio.Core.Networking.Server
             }
         }
 
-        public void Disconnect(NetworkPeer peer, ServerAuth.Status reason)
+        public void Disconnect(INetworkPeer peer, ServerAuth.Status reason)
         {
-            if (peer.EnetPeer.State == PeerState.Disconnected || peer.EnetPeer.State == PeerState.Disconnecting || peer.EnetPeer.State == PeerState.DisconnectLater)
+            var enetPeer = ((NetworkPeer) peer).EnetPeer;
+
+            if (enetPeer.State == PeerState.Disconnected || enetPeer.State == PeerState.Disconnecting || enetPeer.State == PeerState.DisconnectLater)
             {
                 return;
             }
 
-            m_Logger.LogWarning($"{peer.Name} was rejected because of failed Steam authentication: {reason}.");
+            m_Logger.LogWarning($"{peer} was rejected because of failed Steam authentication: {reason}.");
 
             Send(peer, new TerminatePacket
             {
                 AuthFailureReason = reason
             });
-            peer.EnetPeer.Disconnect(0);
+            enetPeer.Disconnect(0);
         }
 
-        public void Disconnect(NetworkPeer peer, string reason)
+        public void Disconnect(INetworkPeer peer, string reason)
         {
-            if (peer.EnetPeer.State == PeerState.Disconnected || peer.EnetPeer.State == PeerState.Disconnecting || peer.EnetPeer.State == PeerState.DisconnectLater)
+            var enetPeer = ((NetworkPeer)peer).EnetPeer;
+
+            if (enetPeer.State == PeerState.Disconnected || enetPeer.State == PeerState.Disconnecting || enetPeer.State == PeerState.DisconnectLater)
             {
                 return;
             }
 
-            m_Logger.LogInformation(peer.Name + " was disconnected: " + reason);
+            m_Logger.LogInformation($"{peer} was disconnected: {reason}");
 
             Send(peer, new TerminatePacket
             {
                 Reason = reason
             });
-            peer.EnetPeer.Disconnect(0);
+            enetPeer.Disconnect(0);
         }
 
         private void StartPingThread()
@@ -158,73 +160,12 @@ namespace ImperialStudio.Core.Networking.Server
             while (IsListening)
             {
                 PingClients();
-                OnWorldUpdate();
 
                 Thread.Sleep(WorldUpdateInterval);
             }
         }
 
-        private void OnWorldUpdate()
-        {
-            using (new SpeedBenchmark("OnWorldUpdate", m_Logger))
-            {
-                Dictionary<ushort, byte[]> entityFullStates = new Dictionary<ushort, byte[]>();
-                var entities = m_EntityManager.GetEntities().ToList();
-
-                foreach (var entity in entities)
-                {
-                    BitBuffer buffer = new BitBuffer();
-                    entity.Write(buffer);
-
-                    byte[] state = new byte[entity.StateSize];
-                    buffer.ToArray(state);
-
-                    entityFullStates.Add(entity.Id, state);
-                }
-
-
-                foreach (var peer in GetPeers())
-                {
-                    Dictionary<ushort, byte[]> states = new Dictionary<ushort, byte[]>();
-                    List<WorldSpawn> spawns = new List<WorldSpawn>(); 
-
-                    foreach (var entity in entities)
-                    {
-                        byte[] stateToSend = new byte[entity.StateSize];
-                        byte[] fullState = entityFullStates[entity.Id];
-
-                        if (!m_Snapshots.HasSnapshot(peer, entity.Id))
-                        {
-                            spawns.Add(new WorldSpawn(entity));
-                            stateToSend = fullState;
-                        }
-                        else
-                        {
-                            byte[] previousState = m_Snapshots.GetSnapshot(peer, entity.Id);
-
-                            var previousStateBuffer = new BitBuffer(previousState.Length);
-                            previousStateBuffer.AddBytes(previousState);
-                            
-                            BitBuffer sendBuffer = new BitBuffer(entity.StateSize);
-                            entity.Write(sendBuffer, previousStateBuffer);
-                            sendBuffer.ToArray(stateToSend);
-                        }
-
-                        states.Add(entity.Id, stateToSend);
-                        m_Snapshots.AddSnapshot(peer, entity.Id, fullState);
-                    }
-
-                    WorldUpdatePacket packet = new WorldUpdatePacket
-                    {
-                        Spawns = spawns,
-                        EntityStates = states,
-                        Despawns = new ushort[0] // todo
-                    };
-
-                    Send(peer, packet);
-                }
-            }
-        }
+      
 
         private DateTime m_LastPing;
         private void PingClients()
@@ -243,7 +184,7 @@ namespace ImperialStudio.Core.Networking.Server
                     if (ping > ClientTimeOut)
                         toDisconnect.Add(pendingPing);
 
-                    bool isConnected = pendingPing.NetworkPeer.EnetPeer.State == PeerState.Connected;
+                    bool isConnected = ((NetworkPeer)pendingPing.NetworkPeer).EnetPeer.State == PeerState.Connected;
 
                     if (isConnected)
                     {
@@ -280,7 +221,8 @@ namespace ImperialStudio.Core.Networking.Server
 #if LOG_NETWORK
                 foreach (var peer in GetPeers())
                 {
-                    m_Logger.LogDebug($"{peer.Name} ping: {peer.EnetPeer.RoundTripTime}ms");
+                    var enetPeer = ((NetworkPeer) peer).EnetPeer;
+                    m_Logger.LogDebug($"{peer} ping: {enetPeer.RoundTripTime}ms");
                 }
 #endif
             }
@@ -290,7 +232,7 @@ namespace ImperialStudio.Core.Networking.Server
 
         private void OnPong(object sender, PongEvent @event)
         {
-            var pendingPing = m_PendingPings.FirstOrDefault(d => d.PingId == @event.PongPacket.PingId && d.NetworkPeer.EnetPeer.ID == @event.Peer.EnetPeer.ID);
+            var pendingPing = m_PendingPings.FirstOrDefault(d => d.PingId == @event.PongPacket.PingId && d.NetworkPeer.Id == @event.Peer.Id);
             if (pendingPing.PingId == 0)
                 return;
 
@@ -300,13 +242,13 @@ namespace ImperialStudio.Core.Networking.Server
             @event.Peer.Ping = ping;
 
 #if LOG_NETWORK
-            m_Logger.LogDebug($"{@event.Peer.Name} ping: {ping.TotalMilliseconds}ms");
+            m_Logger.LogDebug($"{@event.Peer} ping: {ping.TotalMilliseconds}ms");
 #endif
         }
 
         private struct PendingPing
         {
-            public NetworkPeer NetworkPeer { get; set; }
+            public INetworkPeer NetworkPeer { get; set; }
             public DateTime SendTime { get; set; }
             public ulong PingId { get; set; }
         }

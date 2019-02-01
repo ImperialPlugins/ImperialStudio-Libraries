@@ -1,4 +1,6 @@
-﻿namespace ImperialStudio.Core.Serialization
+﻿using ImperialStudio.Core.Api.Serialization;
+
+namespace ImperialStudio.Core.Serialization
 {
     public class ZeroFormatterSerializer : IObjectSerializer
     {

@@ -1,0 +1,27 @@
+{
+    "name": "ImperialStudio.Core.Networking",
+    "references": [
+        "ENet-CSharp",
+        "ImperialStudio.Core.Api",
+        "ImperialStudio.Core",
+        "NetStack",
+        "Disruptor"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Castle.Core.dll",
+        "Castle.Windsor.dll",
+        "Facepunch.Steamworks.dll",
+        "Microsoft.CSharp.dll",
+        "ZeroFormatter.dll",
+        "ZeroFormatter.Interfaces.dll",
+        "System.Memory.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}

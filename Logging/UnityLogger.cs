@@ -1,5 +1,6 @@
 ﻿using System;
 using Castle.Windsor;
+using ImperialStudio.Core.Api.Logging;
 using ImperialStudio.Core.Reflection;
 using UnityEngine;
 
@@ -41,6 +42,11 @@ namespace ImperialStudio.Core.Logging
                                    + $"{message}";
 
             Debug.LogFormat(logType, LogOption.NoStacktrace, null, formattedLine, bindings);
+
+            if (exception != null)
+            {
+                Debug.LogException(exception);
+            }
         }
 
         public override string ServiceName => "UnityLogger";

@@ -1,4 +1,5 @@
-﻿using ImperialStudio.Core.Serialization;
+﻿using ImperialStudio.Core.Api.Entities;
+using ImperialStudio.Core.Serialization;
 using NetStack.Serialization;
 using UnityEngine;
 

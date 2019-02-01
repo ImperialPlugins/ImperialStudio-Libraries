@@ -1,14 +1,15 @@
 ﻿using System;
+using ImperialStudio.Core.Api.Eventing;
 using ImperialStudio.Core.Eventing;
 
 namespace ImperialStudio.Core.Entities
 {
     public class EntitySpawnEvent : Event, ICancellableEvent
     {
-        public ushort EntityId { get; }
+        public int EntityId { get; }
         public Type EntityType { get; }
 
-        public EntitySpawnEvent(ushort entityId, Type type)
+        public EntitySpawnEvent(int entityId, Type type)
         {
             EntityId = entityId;
             EntityType = type;

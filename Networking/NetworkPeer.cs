@@ -1,9 +1,10 @@
 ﻿using System;
 using ENet;
+using ImperialStudio.Core.Api.Networking;
 
 namespace ImperialStudio.Core.Networking
 {
-    public class NetworkPeer
+    public class NetworkPeer : INetworkPeer
     {
         public NetworkPeer(Peer enetPeer)
         {
@@ -14,11 +15,10 @@ namespace ImperialStudio.Core.Networking
         public bool IsAuthenticated { get; set; }
         public ulong SteamId { get; set; }
         public TimeSpan Ping { get; set; }
-
         public string Username { get; set; }
-
-        public string Name => $"Peer #{EnetPeer.ID} (Steam: {SteamId})";
-
-        public override string ToString() => Name;
+        public uint Id => EnetPeer.ID;
+        public string Ip => EnetPeer.IP;
+        public ushort Port => EnetPeer.Port;
+        public override string ToString() => $"Peer #{Id} (Steam: {SteamId})";
     }
 }

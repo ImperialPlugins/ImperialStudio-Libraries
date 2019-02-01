@@ -1,20 +1,24 @@
 ﻿using Castle.Windsor;
 using ENet;
-using ImperialStudio.Core.Eventing;
+using ImperialStudio.Core.Api.Eventing;
+using ImperialStudio.Core.Api.Networking;
+using ImperialStudio.Core.Api.Networking.Packets;
+using ImperialStudio.Core.Api.Serialization;
 using ImperialStudio.Core.Events;
 using ImperialStudio.Core.Logging;
 using ImperialStudio.Core.Networking.Events;
 using ImperialStudio.Core.Networking.Packets;
-using ImperialStudio.Core.Networking.Packets.Handlers;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using ImperialStudio.Core.Serialization;
+using Disruptor;
+using ImperialStudio.Core.Api.Game;
+using ImperialStudio.Core.Networking.Server;
 using Event = ENet.Event;
 using EventType = ENet.EventType;
-using ILogger = ImperialStudio.Core.Logging.ILogger;
+using ILogger = ImperialStudio.Core.Api.Logging.ILogger;
 
 namespace ImperialStudio.Core.Networking
 {
@@ -22,24 +26,25 @@ namespace ImperialStudio.Core.Networking
     {
         public const byte ChannelUpperLimit = 255;
 
-        private readonly Queue<OutgoingPacket> m_OutgoingQueue;
-        private readonly ICollection<NetworkPeer> m_ConnectedPeers;
+        private readonly RingBuffer<OutgoingPacket> m_OutgoingQueue;
+        private readonly ICollection<INetworkPeer> m_ConnectedPeers;
+        private readonly IDictionary<byte, PacketDescription> m_PacketDescriptions;
 
         public bool IsListening { get; private set; }
-        protected Host m_Host { get; private set; }
 
+        private Host m_Host;
         private Thread m_NetworkThread;
         private volatile bool m_Flush;
 
         public bool AutoFlush { get; set; } = true;
 
         private readonly IObjectSerializer m_PacketSerializer;
-        private readonly INetworkEventHandler m_NetworkEventProcessor;
+        private readonly IIncomingNetworkEventHandler m_NetworkEventProcessor;
         private readonly ILogger m_Logger;
         private readonly IEventBus m_EventBus;
         private readonly IWindsorContainer m_Container;
 
-        protected BaseConnectionHandler(IObjectSerializer packetSerializer, INetworkEventHandler networkEventProcessor, ILogger logger, IEventBus eventBus)
+        protected BaseConnectionHandler(IObjectSerializer packetSerializer, IIncomingNetworkEventHandler networkEventProcessor, ILogger logger, IEventBus eventBus, IGamePlatformAccessor gamePlatformAccessor)
         {
             eventBus.Subscribe<ApplicationQuitEvent>(this, (s, e) => { Dispose(); });
 
@@ -47,11 +52,76 @@ namespace ImperialStudio.Core.Networking
             m_PacketSerializer = packetSerializer;
             m_NetworkEventProcessor = networkEventProcessor;
             m_Logger = logger;
-            m_OutgoingQueue = new Queue<OutgoingPacket>();
-            m_ConnectedPeers = new List<NetworkPeer>();
+
+            int capacity = 1024;
+            if (gamePlatformAccessor.GamePlatform == GamePlatform.Server)
+            {
+                capacity *= ServerConnectionHandler.MaxPlayersUpperLimit;
+            }
+
+            m_OutgoingQueue = new RingBuffer<OutgoingPacket>(capacity);
+            m_ConnectedPeers = new List<INetworkPeer>();
+            m_PacketDescriptions = new Dictionary<byte, PacketDescription>();
+
+            RegisterPacket((byte)PacketType.Ping, new PacketDescription(
+                name: nameof(PacketType.Ping),
+                direction: PacketDirection.Any,
+                channel: (byte)NetworkChannel.PingPong,
+                packetFlags: PacketFlags.Reliable)
+            );
+
+            RegisterPacket((byte)PacketType.Pong, new PacketDescription(
+                name: nameof(PacketType.Pong),
+                direction: PacketDirection.Any,
+                channel: (byte)NetworkChannel.PingPong,
+                packetFlags: PacketFlags.Reliable)
+            );
+
+            RegisterPacket((byte)PacketType.Authenticate, new PacketDescription(
+                name: nameof(PacketType.Authenticate),
+                direction: PacketDirection.ClientToServer,
+                channel: (byte)NetworkChannel.Main,
+                packetFlags: PacketFlags.Reliable,
+                needsAuthentication: false)
+            );
+
+            RegisterPacket((byte)PacketType.Authenticated, new PacketDescription(
+                name: nameof(PacketType.Authenticated),
+                direction: PacketDirection.ServerToClient,
+                channel: (byte)NetworkChannel.Main,
+                packetFlags: PacketFlags.Reliable)
+            );
+
+            RegisterPacket((byte)PacketType.MapChange, new PacketDescription(
+                name: nameof(PacketType.MapChange),
+                direction: PacketDirection.ServerToClient,
+                channel: (byte)NetworkChannel.Main,
+                packetFlags: PacketFlags.Reliable)
+            );
+
+            RegisterPacket((byte)PacketType.WorldUpdate, new PacketDescription(
+                name: nameof(PacketType.WorldUpdate),
+                direction: PacketDirection.ServerToClient,
+                channel: (byte)NetworkChannel.World,
+                packetFlags: PacketFlags.Reliable) //Todo: Make this Unsequenced after Snapshots get implemented fully
+            );
+
+            RegisterPacket((byte)PacketType.InputUpdate, new PacketDescription(
+                name: nameof(PacketType.InputUpdate),
+                direction: PacketDirection.ServerToClient,
+                channel: (byte)NetworkChannel.Input,
+                packetFlags: PacketFlags.Unsequenced)
+            );
+
+            RegisterPacket((byte)PacketType.Terminate, new PacketDescription(
+                name: nameof(PacketType.Terminate),
+                direction: PacketDirection.ServerToClient,
+                channel: (byte)NetworkChannel.Input,
+                packetFlags: PacketFlags.Reliable)
+            );
         }
 
-        public void Send<T>(NetworkPeer peer, T packet) where T: class, IPacket
+        public void Send<T>(INetworkPeer peer, T packet) where T : class, IPacket
         {
             byte[] data = m_PacketSerializer.Serialize(packet);
 
@@ -59,18 +129,13 @@ namespace ImperialStudio.Core.Networking
             Send(new OutgoingPacket
             {
                 Data = data,
-                PacketType = packetType,
+                PacketId = (byte)packetType,
                 Peers = new[] { peer }
             });
         }
 
         public void Send(OutgoingPacket packet)
         {
-            if (packet.Peers.Any(d => !d.EnetPeer.IsSet))
-            {
-                throw new Exception("Failed to send packet because it contains invalid peers.");
-            }
-
             m_OutgoingQueue.Enqueue(packet);
         }
 
@@ -88,26 +153,29 @@ namespace ImperialStudio.Core.Networking
                     break;
                 }
 
-                m_Host.Service(1, out var netEvent);
-                if (netEvent.Type != EventType.None)
+                lock (m_Host)
                 {
+                    m_Host.Service(1, out var netEvent);
+                    if (netEvent.Type != EventType.None)
+                    {
 #if LOG_NETWORK
-                    m_Logger.LogDebug("Network event: " + netEvent.Type);
+                        m_Logger.LogDebug("Network event: " + netEvent.Type);
 #endif
 
-                    HandleIncomingEvent(netEvent);
-                }
+                        HandleIncomingEvent(netEvent);
+                    }
 
-                while (m_OutgoingQueue.Count > 0)
-                {
-                    var outgoingPacket = m_OutgoingQueue.Dequeue();
-                    HandleOutgoingPacket(outgoingPacket);
-                }
+                    while (m_OutgoingQueue.Count > 0)
+                    {
+                        var outgoingPacket = m_OutgoingQueue.Dequeue();
+                        HandleOutgoingPacket(outgoingPacket);
+                    }
 
-                if (AutoFlush || m_Flush)
-                {
-                    m_Host?.Flush();
-                    m_Flush = false;
+                    if (AutoFlush || m_Flush)
+                    {
+                        m_Host?.Flush();
+                        m_Flush = false;
+                    }
                 }
             }
         }
@@ -117,32 +185,20 @@ namespace ImperialStudio.Core.Networking
 #if LOG_NETWORK
             m_Logger.LogDebug("Processing network event: " + @event.Type);
 #endif
-            NetworkPeer networkPeer = null;
+            INetworkPeer networkPeer = null;
             if (@event.Peer.IsSet)
             {
-                networkPeer = GetPeerByNetworkId(@event.Peer.ID);
+                networkPeer = GetPeerByNetworkId(@event.Peer.ID, false);
             }
 
             switch (@event.Type)
             {
                 case EventType.Connect:
-                    if (!@event.Peer.IsSet)
-                    {
-#if LOG_NETWORK
-                        m_Logger.LogWarning("Peer was not set in Connect event.");
-#endif
-                    }
-                    else
-                    {
-                        RegisterPeer(new NetworkPeer(@event.Peer));
-                    }
+                    RegisterPeer(new NetworkPeer(@event.Peer));
                     break;
                 case EventType.Timeout:
                 case EventType.Disconnect:
-                    if (networkPeer != null)
-                    {
-                        UnregisterPeer(networkPeer);
-                    }
+                    UnregisterPeer(networkPeer);
                     break;
             }
 
@@ -157,25 +213,31 @@ namespace ImperialStudio.Core.Networking
 
         private void HandleOutgoingPacket(OutgoingPacket outgoingPacket)
         {
+            var packetDescription = GetPacketDescription(outgoingPacket.PacketId);
+
 #if LOG_NETWORK
-            m_Logger.LogDebug($"[Network] > {outgoingPacket.PacketType.ToString()}");
+            m_Logger.LogDebug($"[Network] > {packetDescription.Name}");
 #endif
-            var peers = outgoingPacket.Peers.Select(d => d.EnetPeer).ToArray();
+            var enetPeers = outgoingPacket.Peers.Select(d => ((NetworkPeer)d).EnetPeer).ToArray();
 
             Packet packet = default;
 
             MemoryStream ms = new MemoryStream();
-            ms.WriteByte((byte)outgoingPacket.PacketType);
+            ms.WriteByte((byte)outgoingPacket.PacketId);
             ms.Write(outgoingPacket.Data.ToArray(), 0, outgoingPacket.Data.Length);
-            packet.Create(ms.ToArray(), outgoingPacket.PacketType.GetPacketDescription().PacketFlags);
+
+            packet.Create(ms.ToArray(), packetDescription.PacketFlags);
             ms.Dispose();
 
-            var channelId = (byte)outgoingPacket.PacketType.GetPacketDescription().Channel;
+            var channelId = packetDescription.ChannelId;
+            lock (m_Host)
+            {
+                if (enetPeers.Length == 1)
+                    enetPeers.First().Send(channelId, ref packet);
+                else
 
-            if (peers.Length == 1)
-                peers.First().Send(channelId, ref packet);
-            else
-                m_Host.Broadcast(channelId, ref packet, peers);
+                    m_Host.Broadcast(channelId, ref packet, enetPeers);
+            }
         }
 
         public void Shutdown(bool waitForQueue = true)
@@ -187,8 +249,12 @@ namespace ImperialStudio.Core.Networking
 
             IsListening = false;
 
-            m_Host?.Dispose();
-            m_Host = null;
+            lock (m_Host)
+            {
+                m_Host?.Dispose();
+                m_Host = null;
+            }
+
             //todo: implement waitForQueue
         }
 
@@ -228,34 +294,58 @@ namespace ImperialStudio.Core.Networking
             Shutdown(false);
         }
 
-        public IEnumerable<NetworkPeer> GetPeers()
+        public IEnumerable<INetworkPeer> GetPeers(bool authenticatedOnly = true)
         {
-            return m_ConnectedPeers.Where(d => d.IsAuthenticated);
+            IEnumerable<INetworkPeer> peers = m_ConnectedPeers;
+            if (authenticatedOnly)
+                peers = peers.Where(d => d.IsAuthenticated);
+
+            return peers;
         }
 
-        public IEnumerable<NetworkPeer> GetPendingPeers()
+        public IEnumerable<INetworkPeer> GetPendingPeers()
         {
             return m_ConnectedPeers.Where(d => !d.IsAuthenticated);
         }
 
-        public void RegisterPeer(NetworkPeer networkPeer)
+        public void RegisterPeer(INetworkPeer networkPeer)
         {
             m_ConnectedPeers.Add(networkPeer);
         }
 
-        public void UnregisterPeer(NetworkPeer networkPeer)
+        public void UnregisterPeer(INetworkPeer networkPeer)
         {
             m_ConnectedPeers.Remove(networkPeer);
         }
 
-        public NetworkPeer GetPeerByNetworkId(uint peerID)
+        public void RegisterPacket(byte id, PacketDescription packetDescription)
         {
-            return GetPeers().FirstOrDefault(d => d.EnetPeer.ID == peerID);
+            if (m_PacketDescriptions.ContainsKey(id))
+            {
+                throw new Exception($"Packet with id: {id} is already registered!");
+            }
+
+            m_PacketDescriptions.Add(id, packetDescription);
         }
 
-        public NetworkPeer GetPeerBySteamId(ulong steamId)
+        public PacketDescription GetPacketDescription(byte id)
         {
-            return GetPeers().FirstOrDefault(d => d.SteamId == steamId);
+            if (!m_PacketDescriptions.ContainsKey(id))
+            {
+                throw new Exception($"Packet is not registered: {id}");
+            }
+
+            return m_PacketDescriptions[id];
+        }
+
+        public INetworkPeer GetPeerByNetworkId(uint peerID, bool authenticatedOnly = true)
+        {
+            return GetPeers(authenticatedOnly).FirstOrDefault(d => d.Id == peerID);
+        }
+
+        public INetworkPeer GetPeerBySteamId(ulong steamId, bool authenticatedOnly = true)
+        {
+            return GetPeers(authenticatedOnly).FirstOrDefault(d => d.SteamId == steamId);
         }
     }
 }

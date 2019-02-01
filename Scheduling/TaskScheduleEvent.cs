@@ -1,4 +1,6 @@
-﻿using ImperialStudio.Core.Eventing;
+﻿using ImperialStudio.Core.Api.Eventing;
+using ImperialStudio.Core.Api.Scheduling;
+using ImperialStudio.Core.Eventing;
 
 namespace ImperialStudio.Core.Scheduling
 {

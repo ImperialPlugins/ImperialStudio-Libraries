@@ -1,12 +1,14 @@
-﻿namespace ImperialStudio.Core.Game
+﻿using ImperialStudio.Core.Api.Game;
+
+namespace ImperialStudio.Core.Game
 {
     public class GamePlatformAccessor : IGamePlatformAccessor
     {
-        public GamePlatform GamePlatform { get; }
-
         public GamePlatformAccessor(GamePlatform gamePlatform)
         {
             GamePlatform = gamePlatform;
         }
+
+        public GamePlatform GamePlatform { get; }
     }
 }

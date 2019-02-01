@@ -1,4 +1,5 @@
 ﻿using System;
+using ImperialStudio.Core.Api.Scheduling;
 
 namespace ImperialStudio.Core.Scheduling
 {

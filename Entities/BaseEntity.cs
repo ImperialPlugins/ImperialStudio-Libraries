@@ -1,17 +1,18 @@
 ﻿using NetStack.Serialization;
 using System.Collections.Generic;
 using System.Linq;
+using ImperialStudio.Core.Api.Entities;
+using ImperialStudio.Core.Api.Networking;
 using UnityEngine;
 
 namespace ImperialStudio.Core.Entities
 {
     public abstract class BaseEntity : IEntity
     {
-        public ushort Id { get; set; }
+        public int Id { get; set; }
         public abstract string Name { get; protected set; }
 
-        //Todo: change from ulong to NetworkPeer
-        public ulong Owner { get; set; }
+        public INetworkPeer Owner { get; set; }
         public Transform Transform { get; protected set; }
         public bool IsDisposed { get; private set; }
         protected List<IEntityState> EntityStates { get; private set; }
@@ -22,13 +23,20 @@ namespace ImperialStudio.Core.Entities
             if (m_Inited)
                 return;
 
-            EntityStates = new List<IEntityState>
-            {
-                new TransformPositionState(Transform),
-                new TransformRotationState(Transform)
-            };
+            Name = $"Entity[{GetType().Name.Replace("Entity", "")}]-{Id}";
+            if (Owner?.Username != null)
+                Name += $"({Owner.Username})";
 
             OnInit();
+
+            EntityStates = new List<IEntityState>();
+
+            if (Transform != null)
+            {
+                EntityStates.Add(new TransformPositionState(Transform));
+                EntityStates.Add(new TransformRotationState(Transform));
+            }
+
             m_Inited = true;
         }
 
@@ -44,6 +52,7 @@ namespace ImperialStudio.Core.Entities
         }
 
         public int StateSize => EntityStates.Sum(d => d.StateSize + EntityStates.Count);
+        public bool IsOwner { get; set; }
 
         public void Read(BitBuffer bitBuffer)
         {

@@ -1,16 +1,17 @@
-﻿using ImperialStudio.Core.Game;
-using ImperialStudio.Core.Logging;
+﻿using ImperialStudio.Core.Logging;
 using ImperialStudio.Core.Networking.Client;
 using System;
 using System.Linq;
-using ImperialStudio.Core.Serialization;
+using ImperialStudio.Core.Api.Game;
+using ImperialStudio.Core.Api.Logging;
+using ImperialStudio.Core.Api.Networking;
+using ImperialStudio.Core.Api.Networking.Packets;
+using ImperialStudio.Core.Api.Serialization;
 
 namespace ImperialStudio.Core.Networking.Packets.Handlers
 {
     public abstract class BasePacketHandler<T> : BasePacketHandler where T : class, IPacket, new()
     {
-        private readonly IConnectionHandler m_ConnectionHandler;
-
         protected sealed override void OnHandleVerifiedPacket(IncomingPacket incomingPacket)
         {
             T deserialized;
@@ -38,16 +39,15 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
                 connectionHandler,
                 logger)
         {
-            m_ConnectionHandler = connectionHandler;
         }
 
-        protected abstract void OnHandleVerifiedPacket(NetworkPeer sender, T incomingPacket);
+        protected abstract void OnHandleVerifiedPacket(INetworkPeer sender, T incomingPacket);
     }
 
     public abstract class BasePacketHandler : IPacketHandler
     {
         protected IObjectSerializer PacketSerializer { get; }
-        public PacketType PacketType { get; }
+        public byte PacketType { get; }
 
         private readonly IGamePlatformAccessor m_GamePlatformAccessor;
         private readonly IConnectionHandler m_ConnectionHandler;
@@ -58,7 +58,7 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
             ILogger logger)
         {
             PacketSerializer = packetSerializer;
-            PacketType = ((PacketTypeAttribute[])GetType().GetCustomAttributes(typeof(PacketTypeAttribute), false)).First().PacketType;
+            PacketType = (byte) ((PacketTypeAttribute[])GetType().GetCustomAttributes(typeof(PacketTypeAttribute), false)).First().PacketType;
             m_GamePlatformAccessor = gamePlatformAccessor;
             m_ConnectionHandler = connectionHandler;
             m_Logger = logger;
@@ -72,19 +72,19 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
                 OnHandleVerifiedPacket(incomingPacket);
 #if LOG_NETWORK
             else
-                m_Logger.LogWarning($"Dropped packet from {incomingPacket.Peer.Name}: Packet could not be verified.");
+                m_Logger.LogWarning($"Dropped packet from {incomingPacket.Peer}: Packet could not be verified.");
 #endif
         }
 
         protected virtual void OnVerifyPacket(IncomingPacket incomingPacket)
         {
             var currentPlatform = m_GamePlatformAccessor.GamePlatform;
-            var packetDescription = incomingPacket.PacketType.GetPacketDescription();
+            var packetDescription = m_ConnectionHandler.GetPacketDescription(incomingPacket.PacketId);
 
             // Validate channel
-            if (incomingPacket.Channel != packetDescription.Channel)
+            if (incomingPacket.ChannelId != packetDescription.ChannelId)
             {
-                Reject(incomingPacket, $"Channel mismatch: received: {(byte)incomingPacket.Channel}, expected: {(byte)packetDescription.Channel}");
+                Reject(incomingPacket, $"Channel mismatch: received: {incomingPacket.ChannelId}, expected: {packetDescription.ChannelId}");
                 return;
             }
 
@@ -121,7 +121,7 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
                     }
 
                     var clientConnectionHandler = (ClientConnectionHandler)m_ConnectionHandler;
-                    if (incomingPacket.Peer.EnetPeer.ID == clientConnectionHandler.ServerPeer.EnetPeer.ID)
+                    if (incomingPacket.Peer.Id == clientConnectionHandler.ServerPeer.Id)
                     {
                         Reject(incomingPacket, "Server tried to send a client packet");
                         return;
@@ -138,7 +138,7 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
 
         protected void Reject(IncomingPacket incomingPacket, string reason)
         {
-            m_Logger.LogWarning($"Dropped packet \"{incomingPacket.PacketType.ToString()}\" from {incomingPacket.Peer.Name}: {reason}");
+            m_Logger.LogWarning($"Dropped packet \"{incomingPacket.PacketId.ToString()}\" from {incomingPacket.Peer}: {reason}");
         }
 
         protected abstract void OnHandleVerifiedPacket(IncomingPacket incomingPacket);

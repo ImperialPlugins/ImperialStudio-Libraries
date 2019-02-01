@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using ImperialStudio.Core.Api.Scheduling;
 
 namespace ImperialStudio.Core.Scheduling
 {

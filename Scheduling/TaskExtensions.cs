@@ -1,4 +1,6 @@
-﻿namespace ImperialStudio.Core.Scheduling
+﻿using ImperialStudio.Core.Api.Scheduling;
+
+namespace ImperialStudio.Core.Scheduling
 {
     public static class TaskExtensions
     {

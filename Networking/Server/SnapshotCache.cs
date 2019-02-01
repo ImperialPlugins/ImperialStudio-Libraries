@@ -1,15 +1,17 @@
 ﻿using System.Collections.Generic;
+using ImperialStudio.Core.Api.Networking;
+using ImperialStudio.Core.Util;
 
 namespace ImperialStudio.Core.Networking.Server
 {
     public class SnapshotCache : ISnapshotCache
     {
         // <Enet Peer ID, <Entity ID, SnapShot>>
-        private readonly Dictionary<uint, Dictionary<ushort, byte[]>> m_Cache = new Dictionary<uint, Dictionary<ushort, byte[]>>();
+        private readonly Dictionary<uint, Dictionary<int, byte[]>> m_Cache = new Dictionary<uint, Dictionary<int, byte[]>>();
 
-        public byte[] GetSnapshot(NetworkPeer peer, ushort entityId)
+        public byte[] GetSnapshot(INetworkPeer peer, int entityId)
         {
-            var peerId = peer.EnetPeer.ID;
+            var peerId = peer.Id;
             if (!m_Cache.ContainsKey(peerId))
             {
                 return null;
@@ -24,33 +26,26 @@ namespace ImperialStudio.Core.Networking.Server
             return entCache[entityId];
         }
 
-        public void AddSnapshot(NetworkPeer peer, ushort entityId, byte[] snapShot)
+        public void AddSnapshot(INetworkPeer peer, int entityId, byte[] snapShot)
         {
-            var peerId = peer.EnetPeer.ID;
+            var peerId = peer.Id;
             if (!m_Cache.ContainsKey(peerId))
             {
-                m_Cache.Add(peerId, new Dictionary<ushort, byte[]>());
+                m_Cache.Add(peerId, new Dictionary<int, byte[]>());
             }
 
             var entCache = m_Cache[peerId];
-            if (!entCache.ContainsKey(entityId))
-            {
-                entCache[entityId] = snapShot;
-            }
-            else
-            {
-                entCache.Add(entityId, snapShot);
-            }
+            entCache.AddOrSet(entityId, snapShot);
         }
 
-        public bool HasSnapshot(NetworkPeer peer, ushort entityId)
+        public bool HasSnapshot(INetworkPeer peer, int entityId)
         {
-            return m_Cache.ContainsKey(peer.EnetPeer.ID) && m_Cache[peer.EnetPeer.ID].ContainsKey(entityId);
+            return m_Cache.ContainsKey(peer.Id) && m_Cache[peer.Id].ContainsKey(entityId);
         }
 
-        public void Clear(NetworkPeer peer)
+        public void Clear(INetworkPeer peer)
         {
-            m_Cache.Remove(peer.EnetPeer.ID);
+            m_Cache.Remove(peer.Id);
         }
     }
 }

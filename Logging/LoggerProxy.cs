@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Castle.Windsor;
+using ImperialStudio.Core.Api.Logging;
 using ImperialStudio.Core.DependencyInjection;
 
 namespace ImperialStudio.Core.Logging

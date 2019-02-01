@@ -1,13 +1,15 @@
-﻿using ImperialStudio.Core.Eventing;
-using ImperialStudio.Core.Game;
-using ImperialStudio.Core.Logging;
+﻿using ImperialStudio.Core.Api.Eventing;
+using ImperialStudio.Core.Api.Game;
+using ImperialStudio.Core.Api.Logging;
+using ImperialStudio.Core.Api.Map;
+using ImperialStudio.Core.Api.Networking;
+using ImperialStudio.Core.Api.Scheduling;
+using ImperialStudio.Core.Api.Serialization;
 using ImperialStudio.Core.Map;
-using ImperialStudio.Core.Scheduling;
-using ImperialStudio.Core.Serialization;
 
 namespace ImperialStudio.Core.Networking.Packets.Handlers
 {
-    [PacketType(PacketType.MapChange)]
+    [PacketType(Packets.PacketType.MapChange)]
     public class MapChangeHandler : BasePacketHandler<MapChangePacket>
     {
         private readonly ITaskScheduler m_TaskScheduler;
@@ -36,7 +38,7 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
             }
         }
 
-        protected override void OnHandleVerifiedPacket(NetworkPeer sender, MapChangePacket incomingPacket)
+        protected override void OnHandleVerifiedPacket(INetworkPeer sender, MapChangePacket incomingPacket)
         {
             m_TaskScheduler.ScheduleUpdate(this, () =>
             {

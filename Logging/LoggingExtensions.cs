@@ -1,4 +1,5 @@
 ﻿using System;
+using ImperialStudio.Core.Api.Logging;
 
 namespace ImperialStudio.Core.Logging
 {
