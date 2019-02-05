@@ -39,6 +39,7 @@ namespace ImperialStudio.Core.Networking
             RegisterPacketHandler<MapChangeHandler>();
             RegisterPacketHandler<TerminateHandler>();
             RegisterPacketHandler<WorldUpdateHandler>();
+            RegisterPacketHandler<InputUpdateHandler>();
 
             m_Inited = true;
         }
@@ -47,12 +48,12 @@ namespace ImperialStudio.Core.Networking
         {
             var instance = m_Container.Activate<T>();
 
-            if (!m_PacketHandlers.ContainsKey(instance.PacketType))
+            if (!m_PacketHandlers.ContainsKey(instance.PacketId))
             {
-                m_PacketHandlers.Add(instance.PacketType, new List<IPacketHandler>());
+                m_PacketHandlers.Add(instance.PacketId, new List<IPacketHandler>());
             }
 
-            m_PacketHandlers[instance.PacketType].Add(instance);
+            m_PacketHandlers[instance.PacketId].Add(instance);
         }
 
         public void ProcessNetworkEvent(Event @event, INetworkPeer networkPeer)

@@ -10,7 +10,5 @@ namespace ImperialStudio.Core.Api.Entities
 
         void Write(BitBuffer buffer);
         void WriteDelta(BitBuffer buffer, BitBuffer previousState);
-        
-        int StateSize { get; }
     }
 }

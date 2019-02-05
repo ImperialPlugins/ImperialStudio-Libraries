@@ -1,4 +1,5 @@
-﻿using NetStack.Serialization;
+﻿using System;
+using NetStack.Serialization;
 using System.Collections.Generic;
 using System.Linq;
 using ImperialStudio.Core.Api.Entities;
@@ -10,7 +11,7 @@ namespace ImperialStudio.Core.Entities
     public abstract class BaseEntity : IEntity
     {
         public int Id { get; set; }
-        public abstract string Name { get; protected set; }
+        public virtual string Name { get; set; }
 
         public INetworkPeer Owner { get; set; }
         public Transform Transform { get; protected set; }
@@ -35,6 +36,7 @@ namespace ImperialStudio.Core.Entities
             {
                 EntityStates.Add(new TransformPositionState(Transform));
                 EntityStates.Add(new TransformRotationState(Transform));
+                EntityStates.Add(new EntityNameState(this));
             }
 
             m_Inited = true;
@@ -51,7 +53,6 @@ namespace ImperialStudio.Core.Entities
             IsDisposed = true;
         }
 
-        public int StateSize => EntityStates.Sum(d => d.StateSize + EntityStates.Count);
         public bool IsOwner { get; set; }
 
         public void Read(BitBuffer bitBuffer)

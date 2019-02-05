@@ -1,19 +1,15 @@
-﻿using Castle.Windsor;
-using ENet;
-using Facepunch.Steamworks;
+﻿using ENet;
+using ImperialStudio.Core.Api.Eventing;
+using ImperialStudio.Core.Api.Game;
+using ImperialStudio.Core.Api.Networking;
+using ImperialStudio.Core.Api.Serialization;
 using ImperialStudio.Core.Logging;
 using ImperialStudio.Core.Networking.Events;
 using ImperialStudio.Core.Networking.Packets.Handlers;
-using ImperialStudio.Core.Steam;
 using System;
-using ImperialStudio.Core.Api.Eventing;
-using ImperialStudio.Core.Api.Map;
-using ImperialStudio.Core.Api.Networking;
+using Castle.Windsor;
 using ImperialStudio.Core.Api.Scheduling;
-using ImperialStudio.Core.Api.Serialization;
-using ImperialStudio.Core.Map;
-using ImperialStudio.Core.Scheduling;
-using ImperialStudio.Core.Serialization;
+using ImperialStudio.Core.Game;
 using ILogger = ImperialStudio.Core.Api.Logging.ILogger;
 
 namespace ImperialStudio.Core.Networking.Client
@@ -21,30 +17,32 @@ namespace ImperialStudio.Core.Networking.Client
     public sealed class ClientConnectionHandler : BaseConnectionHandler
     {
         public ClientConnectionHandler(
-            IObjectSerializer packetSerializer, 
-            Api.Networking.IIncomingNetworkEventHandler networkEventProcessor, 
-            ILogger logger, 
-            IEventBus eventBus, 
-            ITaskScheduler scheduler,
-            IMapManager mapManager) : base(packetSerializer, networkEventProcessor, logger, eventBus)
+            ITaskScheduler taskScheduler,
+            IWindsorContainer container,
+            IObjectSerializer packetSerializer,
+            IIncomingNetworkEventHandler networkEventProcessor,
+            ILogger logger,
+            IEventBus eventBus,
+            IGamePlatformAccessor gamePlatformAccessor) : base(packetSerializer, networkEventProcessor, logger, eventBus, gamePlatformAccessor)
         {
+            m_TaskScheduler = taskScheduler;
+            m_Container = container;
             m_Logger = logger;
-            m_Scheduler = scheduler;
-            m_MapManager = mapManager;
             eventBus.Subscribe<NetworkEvent>(this, OnNetworkEvent);
         }
 
+        private readonly ITaskScheduler m_TaskScheduler;
+        private readonly IWindsorContainer m_Container;
         private readonly ILogger m_Logger;
-        private readonly ITaskScheduler m_Scheduler;
-        private readonly IMapManager m_MapManager;
 
-        private Auth.Ticket m_AuthTicket;
         private bool m_ConnectingToServer;
         private Host m_Host;
 
         public NetworkPeer ServerPeer { get; private set; }
         public bool PendingTerminate { get; set; }
 
+#if STEAM_AUTH
+        private Auth.Ticket m_AuthTicket;
         private void SetSessionAuthTicket(Auth.Ticket ticket)
         {
             if (m_AuthTicket != null)
@@ -54,6 +52,7 @@ namespace ImperialStudio.Core.Networking.Client
 
             m_AuthTicket = ticket;
         }
+#endif
 
         public void Connect(ClientConnectParameters connectParameters)
         {
@@ -87,39 +86,59 @@ namespace ImperialStudio.Core.Networking.Client
 
         private void InitializeAuthentication()
         {
+#if STEAM_AUTH
             var clientId = SteamClientComponent.Instance.Client.SteamId;
             var ticket = SteamClientComponent.Instance.Client.Auth.GetAuthSessionTicket();
+            var ticketData = ticket.Data;
             var userName = SteamClientComponent.Instance.Client.Username;
             SetSessionAuthTicket(ticket);
-
+#else
+            var clientId = 0u; // ignored
+            var ticketData = Array.Empty<byte>();
+            var userName = GenerateRandomName(10);
+#endif
             Send(ServerPeer, new AuthenticatePacket
             {
                 SteamId = clientId,
-                Ticket = ticket.Data,
+                Ticket = ticketData,
                 Username = userName
             });
         }
 
+        private string GenerateRandomName(int maxLen)
+        {
+            Random r = new Random();
+            string[] consonants = { "b", "c", "d", "f", "g", "h", "j", "k", "l", "m", "l", "n", "p", "q", "r", "s", "sh", "zh", "t", "v", "w", "x" };
+            string[] vowels = { "a", "e", "i", "o", "u", "ae", "y" };
+            string Name = "";
+            Name += consonants[r.Next(consonants.Length)].ToUpper();
+            Name += vowels[r.Next(vowels.Length)];
+            int b = 2; //b tells how many times a new letter has been added. It's 2 right now because the first two letters are already in the name.
+            while (b < r.Next(3, maxLen))
+            {
+                Name += consonants[r.Next(consonants.Length)];
+                b++;
+                Name += vowels[r.Next(vowels.Length)];
+                b++;
+            }
+
+            return Name;
+        }
+
         public override void Dispose()
         {
-            base.Dispose();
+            ServerPeer.EnetPeer.DisconnectNow(0);
 
+#if STEAM_AUTH
             m_AuthTicket?.Cancel();
             m_AuthTicket = null;
+#endif
+
+            base.Dispose();
         }
 
         private void OnNetworkEvent(object sender, NetworkEvent @event)
         {
-            if (@event.EnetEvent.Type == EventType.Disconnect || @event.EnetEvent.Type == EventType.Timeout)
-            {
-                if (!PendingTerminate)
-                {
-                    m_Scheduler.ScheduleUpdate(this, ()=> m_MapManager.GoToMainMenu(), "HandleNetworkEvent->GoToMainMenu", ExecutionTargetContext.NextFrame);
-                }
-
-                PendingTerminate = true;
-            }
-
             if (@event.EnetEvent.Type == EventType.Connect)
             {
                 if (!m_ConnectingToServer)

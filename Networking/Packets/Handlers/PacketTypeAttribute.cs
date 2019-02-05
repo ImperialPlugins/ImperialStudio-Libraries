@@ -5,11 +5,16 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
     [AttributeUsage(AttributeTargets.Class)]
     public class PacketTypeAttribute: Attribute
     {
-        public PacketType PacketType { get; }
+        public byte PacketId { get; }
 
         public PacketTypeAttribute(PacketType packetType)
         {
-            PacketType = packetType;
+            PacketId = (byte) packetType;
+        }
+
+        public PacketTypeAttribute(byte packetId)
+        {
+            PacketId = packetId;
         }
     }
 }

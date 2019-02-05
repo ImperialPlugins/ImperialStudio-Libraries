@@ -1,6 +1,8 @@
 ﻿using Castle.Windsor;
+using Disruptor;
 using ENet;
 using ImperialStudio.Core.Api.Eventing;
+using ImperialStudio.Core.Api.Game;
 using ImperialStudio.Core.Api.Networking;
 using ImperialStudio.Core.Api.Networking.Packets;
 using ImperialStudio.Core.Api.Serialization;
@@ -8,14 +10,12 @@ using ImperialStudio.Core.Events;
 using ImperialStudio.Core.Logging;
 using ImperialStudio.Core.Networking.Events;
 using ImperialStudio.Core.Networking.Packets;
+using ImperialStudio.Core.Networking.Server;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using Disruptor;
-using ImperialStudio.Core.Api.Game;
-using ImperialStudio.Core.Networking.Server;
 using Event = ENet.Event;
 using EventType = ENet.EventType;
 using ILogger = ImperialStudio.Core.Api.Logging.ILogger;
@@ -108,7 +108,7 @@ namespace ImperialStudio.Core.Networking
 
             RegisterPacket((byte)PacketType.InputUpdate, new PacketDescription(
                 name: nameof(PacketType.InputUpdate),
-                direction: PacketDirection.ServerToClient,
+                direction: PacketDirection.ClientToServer,
                 channel: (byte)NetworkChannel.Input,
                 packetFlags: PacketFlags.Unsequenced)
             );
@@ -123,13 +123,17 @@ namespace ImperialStudio.Core.Networking
 
         public void Send<T>(INetworkPeer peer, T packet) where T : class, IPacket
         {
+            Send<T>(peer, packet, packet.GetPacketId());
+        }
+
+        public void Send<T>(INetworkPeer peer, T packet, byte packetId) where T : class, IPacket
+        {
             byte[] data = m_PacketSerializer.Serialize(packet);
 
-            var packetType = packet.GetPacketType();
             Send(new OutgoingPacket
             {
                 Data = data,
-                PacketId = (byte)packetType,
+                PacketId = packetId,
                 Peers = new[] { peer }
             });
         }
@@ -240,24 +244,6 @@ namespace ImperialStudio.Core.Networking
             }
         }
 
-        public void Shutdown(bool waitForQueue = true)
-        {
-            if (!IsListening)
-            {
-                return;
-            }
-
-            IsListening = false;
-
-            lock (m_Host)
-            {
-                m_Host?.Dispose();
-                m_Host = null;
-            }
-
-            //todo: implement waitForQueue
-        }
-
         protected Host GetOrCreateHost()
         {
             return m_Host ?? (m_Host = new Host());
@@ -289,9 +275,17 @@ namespace ImperialStudio.Core.Networking
         public virtual void Dispose()
         {
             if (!IsListening)
+            {
                 return;
+            }
 
-            Shutdown(false);
+            IsListening = false;
+
+            lock (m_Host)
+            {
+                m_Host?.Dispose();
+                m_Host = null;
+            }
         }
 
         public IEnumerable<INetworkPeer> GetPeers(bool authenticatedOnly = true)

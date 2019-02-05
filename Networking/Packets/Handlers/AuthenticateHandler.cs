@@ -1,9 +1,10 @@
-﻿using ENet;
-using Facepunch.Steamworks;
+﻿using Facepunch.Steamworks;
 using ImperialStudio.Core.Logging;
 using ImperialStudio.Core.Networking.Events;
 using ImperialStudio.Core.Networking.Server;
+#if STEAM_AUTH
 using ImperialStudio.Core.Steam;
+#endif
 using System.Collections.Generic;
 using ImperialStudio.Core.Api.Eventing;
 using ImperialStudio.Core.Api.Game;
@@ -39,8 +40,10 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
 
             if (gamePlatformAccessor.GamePlatform == GamePlatform.Server)
             {
+#if STEAM_AUTH
                 eventBus.Subscribe<NetworkEvent>(this, OnNetworkEvent);
                 SteamServerComponent.Instance.Server.Auth.OnAuthChange += OnSteamAuthChange;
+#endif
             }
         }
 
@@ -82,6 +85,7 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
             m_EventBus.Emit(this, new PeerAuthenicatedEvent(peer));
         }
 
+#if STEAM_AUTH
         private void OnNetworkEvent(object sender, NetworkEvent @event)
         {
             var enetEvent = @event.EnetEvent;
@@ -97,24 +101,36 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
                 }
             }
         }
+#endif
 
         protected override void OnHandleVerifiedPacket(INetworkPeer sender, AuthenticatePacket incomingPacket)
         {
             m_Logger.LogDebug("Received authentication request from user: " + incomingPacket.SteamId);
 
-            if (m_PendingAuthentications.ContainsKey(incomingPacket.SteamId) || m_ServerConnectionHandler.GetPeerBySteamId(incomingPacket.SteamId, false) != null)
+#if STEAM_AUTH
+            ulong steamId = incomingPacket.SteamId;
+#else
+            ulong steamId = sender.Id; 
+#endif
+
+            if (sender.IsAuthenticated
+                || m_PendingAuthentications.ContainsKey(steamId))
             {
                 m_ServerConnectionHandler.Disconnect(sender, "Already connected to server!");
                 return;
             }
 
-            m_PendingAuthentications.Add(incomingPacket.SteamId, sender);
+            m_PendingAuthentications.Add(steamId, sender);
             sender.Username = incomingPacket.Username;
 
+#if STEAM_AUTH
             if (!SteamServerComponent.Instance.Server.Auth.StartSession(incomingPacket.Ticket, incomingPacket.SteamId))
             {
                 m_ServerConnectionHandler.Disconnect(sender, "Could not initialize Steam authentication session.");
             }
+#else
+            OnSteamAuthChange(steamId, steamId, ServerAuth.Status.OK);
+#endif
         }
     }
 }

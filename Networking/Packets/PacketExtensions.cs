@@ -9,7 +9,7 @@ namespace ImperialStudio.Core.Networking.Packets
     public static class PacketExtensions
     {
         private static readonly Dictionary<Type, PacketTypeAttribute> m_PacketTypeAttributeCache = new Dictionary<Type, PacketTypeAttribute>();
-        public static PacketType GetPacketType(this IPacket packet)
+        public static byte GetPacketId(this IPacket packet)
         {
             var type = packet.GetType();
 
@@ -19,7 +19,7 @@ namespace ImperialStudio.Core.Networking.Packets
                 m_PacketTypeAttributeCache.Add(type, attribute);
             }
 
-            return m_PacketTypeAttributeCache[type].PacketType;
+            return m_PacketTypeAttributeCache[type].PacketId;
         }
     }
 }

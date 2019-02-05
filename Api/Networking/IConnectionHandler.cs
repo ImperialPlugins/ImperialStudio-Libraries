@@ -6,6 +6,7 @@ namespace ImperialStudio.Core.Api.Networking
 {
     public interface IConnectionHandler : IDisposable
     {
+        void Send<T>(INetworkPeer peer, T packet, byte packetId) where T : class, IPacket;
         void Send<T>(INetworkPeer peer, T packet) where T : class, IPacket;
         void Send(OutgoingPacket outgoingPacket);
         void Flush();

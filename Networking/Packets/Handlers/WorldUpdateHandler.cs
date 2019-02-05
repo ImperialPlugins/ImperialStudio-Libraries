@@ -60,10 +60,10 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
                     continue;
                 }
 
-                m_TaskScheduler.ScheduleUpdate(this, () => m_EntityManager.Spawn(spawn.Id, spawnType, spawn.IsOwner), "EntitySpawn[" + spawnType.Name + "]@" + spawn.Id, ExecutionTargetContext.NextFrame);
+                m_TaskScheduler.RunOnMainThread(this, () => m_EntityManager.Spawn(spawn.Id, spawnType, spawn.IsOwner), "EntitySpawn[" + spawnType.Name + "]@" + spawn.Id);
             }
 
-            m_TaskScheduler.ScheduleUpdate(this, () =>
+            m_TaskScheduler.RunOnMainThread(this, () =>
             {
                 foreach (var statePair in incomingPacket.EntityStates.Where(d =>
                     incomingPacket.Spawns.All(e => e.Id != d.Key)))
@@ -79,7 +79,7 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
 
                     entity.Read(bitBuffer);
                 }
-            }, "UpdateEntities", ExecutionTargetContext.NextFrame);
+            }, "UpdateEntities");
 
             foreach (var despawnId in incomingPacket.Despawns)
             {

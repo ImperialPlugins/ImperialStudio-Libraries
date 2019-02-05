@@ -4,10 +4,11 @@ using ImperialStudio.Core.Logging;
 using ImperialStudio.Core.Networking.Events;
 using ImperialStudio.Core.Networking.Packets.Handlers;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using ImperialStudio.Core.Api.Entities;
 using ImperialStudio.Core.Api.Eventing;
+using ImperialStudio.Core.Api.Game;
 using ImperialStudio.Core.Api.Map;
 using ImperialStudio.Core.Api.Networking;
 using ImperialStudio.Core.Api.Serialization;
@@ -27,17 +28,16 @@ namespace ImperialStudio.Core.Networking.Server
 
         public ServerConnectionHandler(
             IObjectSerializer packetSerializer,
-            Api.Networking.IIncomingNetworkEventHandler networkEventProcessor,
+            IIncomingNetworkEventHandler networkEventProcessor,
             ILogger logger,
-            IEntityManager entityManager,
             IEventBus eventBus,
             ISnapshotCache snapshotCache,
-            IMapManager mapManager) : base(packetSerializer, networkEventProcessor, logger, eventBus)
+            IGamePlatformAccessor gamePlatformAccessor,
+            IMapManager mapManager) : base(packetSerializer, networkEventProcessor, logger, eventBus, gamePlatformAccessor)
         {
             m_EventBus = eventBus;
             m_MapManager = mapManager;
             m_Logger = logger;
-            m_EntityManager = entityManager;
 
             m_Snapshots = snapshotCache;
             ClientTimeOut = TimeSpan.FromSeconds(15);
@@ -49,7 +49,6 @@ namespace ImperialStudio.Core.Networking.Server
         private readonly IEventBus m_EventBus;
         private readonly IMapManager m_MapManager;
         private readonly ILogger m_Logger;
-        private readonly IEntityManager m_EntityManager;
         private readonly ISnapshotCache m_Snapshots;
 
         private Thread m_ServerThread;
@@ -144,13 +143,13 @@ namespace ImperialStudio.Core.Networking.Server
 
         private void StartPingThread()
         {
-            m_PendingPings = new Boo.Lang.List<PendingPing>();
+            m_PendingPings = new List<PendingPing>();
 
             m_ServerThread = new Thread(ServerTick);
             m_ServerThread.Start();
         }
 
-        private Boo.Lang.List<PendingPing> m_PendingPings = new Boo.Lang.List<PendingPing>();
+        private List<PendingPing> m_PendingPings = new List<PendingPing>();
         private ulong m_NextPingId = 1;
 
         private void ServerTick()
@@ -165,7 +164,20 @@ namespace ImperialStudio.Core.Networking.Server
             }
         }
 
-      
+        public override void Dispose()
+        {
+            foreach (var peer in GetPeers(false))
+            {
+                Send(peer, new TerminatePacket
+                {
+                    Reason = "Server is shutting down."
+                });
+
+                ((NetworkPeer)peer).EnetPeer.DisconnectNow(0);
+            }
+
+            base.Dispose();
+        }
 
         private DateTime m_LastPing;
         private void PingClients()

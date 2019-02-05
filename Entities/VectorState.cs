@@ -11,13 +11,19 @@ namespace ImperialStudio.Core.Entities
 
         public void WriteDelta(BitBuffer buffer, BitBuffer previousState)
         {
+            Write(buffer);
+            return;
+
             var newValue = GetCurrentValue();
             var deltaPosition = previousState.ReadVector3() - newValue;
-            buffer.AddVector3(deltaPosition);
+            buffer.AddVector3(newValue);
         }
 
         public void ReadDelta(BitBuffer bitBuffer)
         {
+            Read(bitBuffer);
+            return;
+
             Vector3 delta = bitBuffer.ReadVector3();
             OnUpdateState(m_LastValue, (m_LastValue = m_LastValue + delta));
         }

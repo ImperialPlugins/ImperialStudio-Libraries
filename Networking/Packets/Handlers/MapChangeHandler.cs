@@ -40,10 +40,10 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
 
         protected override void OnHandleVerifiedPacket(INetworkPeer sender, MapChangePacket incomingPacket)
         {
-            m_TaskScheduler.ScheduleUpdate(this, () =>
+            m_TaskScheduler.RunOnMainThread(this, () =>
             {
                 m_MapManager.ChangeMap(incomingPacket.MapName);
-            }, "Map change to " + incomingPacket.MapName, ExecutionTargetContext.NextFrame);
+            }, "Map change to " + incomingPacket.MapName);
         }
     }
 }

@@ -47,7 +47,7 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
     public abstract class BasePacketHandler : IPacketHandler
     {
         protected IObjectSerializer PacketSerializer { get; }
-        public byte PacketType { get; }
+        public byte PacketId { get; }
 
         private readonly IGamePlatformAccessor m_GamePlatformAccessor;
         private readonly IConnectionHandler m_ConnectionHandler;
@@ -58,7 +58,7 @@ namespace ImperialStudio.Core.Networking.Packets.Handlers
             ILogger logger)
         {
             PacketSerializer = packetSerializer;
-            PacketType = (byte) ((PacketTypeAttribute[])GetType().GetCustomAttributes(typeof(PacketTypeAttribute), false)).First().PacketType;
+            PacketId = ((PacketTypeAttribute[])GetType().GetCustomAttributes(typeof(PacketTypeAttribute), false)).First().PacketId;
             m_GamePlatformAccessor = gamePlatformAccessor;
             m_ConnectionHandler = connectionHandler;
             m_Logger = logger;

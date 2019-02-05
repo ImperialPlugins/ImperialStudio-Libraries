@@ -25,26 +25,26 @@ namespace ImperialStudio.Core.Scheduling
 
         private readonly List<ITask> m_Tasks = new List<ITask>();
         private Thread m_MainThread;
+        private AsyncThreadPool m_AsyncThreadPool;
 
         protected virtual void Awake()
         {
             m_MainThread = Thread.CurrentThread;
-            (new AsyncThreadPool(this)).Start();
+            m_AsyncThreadPool  = new AsyncThreadPool(this);
+            m_AsyncThreadPool.Start();
         }
 
         protected virtual void OnDestroy()
         {
-            m_Logger.LogDebug("[UnityTaskScheduler] OnDestroy");
-
             foreach (var task in Tasks)
                 task.Cancel();
+
             m_Tasks.Clear();
         }
 
         public virtual ITask ScheduleUpdate(object @object, Action action, string taskName, ExecutionTargetContext target)
         {
             UnityTask task = new UnityTask(++m_NextTaskId, taskName, this, @object, action, target);
-
             TriggerEvent(task, (sender, @event) =>
             {
                 if (target != ExecutionTargetContext.Sync)
@@ -78,6 +78,10 @@ namespace ImperialStudio.Core.Scheduling
 
         public virtual void TriggerEvent(UnityTask task, EventCallback cb = null)
         {
+            if (task.ExecutionTarget == ExecutionTargetContext.Async || task.ExecutionTarget == ExecutionTargetContext.NextAsyncFrame ||
+                task.ExecutionTarget == ExecutionTargetContext.EveryAsyncFrame)
+                m_AsyncThreadPool.EventWaitHandle.Set();
+
             TaskScheduleEvent e = new TaskScheduleEvent(task);
 
             if (m_EventBus == null)

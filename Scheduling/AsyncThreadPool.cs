@@ -1,16 +1,17 @@
-﻿using System.Linq;
+﻿using ImperialStudio.Core.Api.Scheduling;
+using System.Linq;
 using System.Threading;
-using ImperialStudio.Core.Api.Scheduling;
 
 namespace ImperialStudio.Core.Scheduling
 {
     public class AsyncThreadPool
     {
         private readonly UnityTaskScheduler m_TaskScheduler;
-
+        public EventWaitHandle EventWaitHandle { get; }
         public AsyncThreadPool(UnityTaskScheduler scheduler)
         {
             m_TaskScheduler = scheduler;
+            EventWaitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
         }
 
         private Thread m_TaskThread;
@@ -29,7 +30,7 @@ namespace ImperialStudio.Core.Scheduling
 
                 foreach (ITask task in cpy)
                 {
-                    if(task.Period == null || (task.Period != null  && task.ExecutionTarget != ExecutionTargetContext.Async))         
+                    if (task.Period == null || (task.Period != null && task.ExecutionTarget != ExecutionTargetContext.Async))
                         if (task.ExecutionTarget != ExecutionTargetContext.EveryAsyncFrame)
                             continue;
 
@@ -43,6 +44,11 @@ namespace ImperialStudio.Core.Scheduling
                         continue;
 
                     m_TaskScheduler.RunTask(task);
+                }
+
+                if (cpy.Count == 0)
+                {
+                    EventWaitHandle.WaitOne();
                 }
 
                 Thread.Sleep(20);

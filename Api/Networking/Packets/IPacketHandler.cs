@@ -2,7 +2,7 @@
 {
     public interface IPacketHandler
     {
-        byte PacketType { get; }
+        byte PacketId { get; }
 
         void HandlePacket(IncomingPacket incomingPacket);
     }

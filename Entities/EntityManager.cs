@@ -14,7 +14,7 @@ using ILogger = ImperialStudio.Core.Api.Logging.ILogger;
 
 namespace ImperialStudio.Core.Entities
 {
-    public class EntityManager : IEntityManager
+    public class EntityManager : IEntityManager, IDisposable
     {
         private readonly IEventBus m_EventBus;
         private readonly ILogger m_Logger;
@@ -38,7 +38,7 @@ namespace ImperialStudio.Core.Entities
 
         public void DespawnEntities(INetworkPeer owner, Action callback)
         {
-            m_TaskScheduler.ScheduleUpdate(this, () =>
+            m_TaskScheduler.RunOnMainThread(this, () =>
                 {
                     var allEntities = GetEntities().ToList();
                     foreach (var ent in allEntities.Where(d => d.Owner.Id == owner.Id))
@@ -46,8 +46,8 @@ namespace ImperialStudio.Core.Entities
                         Despawn(ent);
                     }
 
-                    callback();
-                }, $"DespawnEntities-[{owner.Username}]", ExecutionTargetContext.NextFrame);
+                    callback?.Invoke();
+                }, $"DespawnEntities-[{owner.Username}]");
         }
 
         public IEnumerable<IEntity> GetEntities()
@@ -185,6 +185,19 @@ namespace ImperialStudio.Core.Entities
         public void Despawn(IEntity entity, Action callback = null)
         {
             Despawn(entity.Id, callback);
+        }
+
+        public void Dispose()
+        {
+            lock (m_SpawnedEntities)
+            {
+                var entites = m_SpawnedEntities.Values.ToList();
+
+                foreach (var entity in entites)
+                {
+                    Despawn(entity);
+                }
+            }
         }
     }
 }
