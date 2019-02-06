@@ -1,22 +1,28 @@
-# ImperialStudio.Core
-Contains core features for Trojaner's Unity projects.
+# ImperialStudio Libraries
+Contains a modern framework for game projects.
+All libraries (except ImperialStudio.Core.UnityEngine) are written in an engine-independent way. 
 
 Some features include:
-* ENet based networking with an authorative server (might add P2P for voice chat etc)
+* ENet based high level networking API with an authorative server (no P2P support at the moment)
 * IoC container for services
+* Abstractions. A lot of them. Any component is replacable.
 * A Unity project/library that actually uses modern C# with lots of OOP, patterns, etc.
 
+# Compiling
+If you want to compile the Unity projects, copy "UnityEngine.CoreModule.dll", "UnityEngine.PhysicsModule.dll", "UnityEngine.ProfilerModule.dll" and "UnityEngine.dll" into the Libraries folder. If you are using an older version of Unity, just copying "UnityEngine.dll" should be sufficient.
+
 ## License
-All rights reserved (c) 2019 Enes Sadık Özbek. 
+Copyright (c) 2019 Enes Sadık Özbek. All rights reserved. 
 
-Some code was burrowed from my contributions to [RocketMod](https://github.com/RocketMod/Rocket) (EventBus, Loggers, TaskScheduler and ReflectionExtensions). These are licensed under Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 license.
-All other published source code is for educational purposes only and may not be used in commercial projects.
+Everything under "ImperialStudio" namespace is licensed as Creative Commons Attribution-NonCommercial-ShareAlike 4.0. See LICENSE file for the full license text.
 
-## Dependencies
-* [Castle.Windsor](https://github.com/castleproject/Windsor)
-* [Castle.Core](https://github.com/castleproject/Core)
-* [ENet-CSharp](https://github.com/nxrighthere/ENet-CSharp)
-* [Facepunch.Steamworks](https://github.com/Facepunch/Facepunch.Steamworks)
-* [NetStack](https://github.com/nxrighthere/NetStack)
-* [ZeroFormatter](https://github.com/neuecc/ZeroFormatter)
-* [Disruptor for Unity](https://github.com/dave-hillier/disruptor-unity3d)
+In summary; 
+You are free to:
+* Share — copy and redistribute the material in any medium or format
+* Adapt — You can remix, transform, and build upon the material
+
+Under the following terms:
+* Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
+* ShareAlike — If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original.
+* No additional restrictions — You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.
+* NonCommercial — You may not use the material for commercial purposes (contact es.ozbek [at] outlook.com for commercial licenses).

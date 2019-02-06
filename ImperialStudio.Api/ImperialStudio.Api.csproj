@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>7.2</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ENet\ENet.csproj" />
+    <ProjectReference Include="..\NetStack\NetStack.csproj" />
+  </ItemGroup>
+
+</Project>
