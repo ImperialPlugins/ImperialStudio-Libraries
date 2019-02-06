@@ -1,30 +1,40 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="$(MSBuildThisFileDirectory)..\targets\ProjectShared.targets" />
+  
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>7.2</LangVersion>
   </PropertyGroup>
-
+  
   <ItemGroup>
     <PackageReference Include="Facepunch.Steamworks" Version="0.7.5" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ImperialStudio.Core\ImperialStudio.Core.csproj" />
+    <ProjectReference Include="..\ImperialStudio.Networking\ImperialStudio.Networking.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="UnityEngine">
       <HintPath>..\Libraries\UnityEngine.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\Libraries\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputModule">
+      <HintPath>..\Libraries\UnityEngine.InputModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.PhysicsModule">
       <HintPath>..\Libraries\UnityEngine.PhysicsModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.ProfilerModule">
       <HintPath>..\Libraries\UnityEngine.ProfilerModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
   </ItemGroup>
 

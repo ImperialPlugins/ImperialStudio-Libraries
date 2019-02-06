@@ -1,5 +1,8 @@
 ﻿using ImperialStudio.Core.Entities;
+using ImperialStudio.Core.UnityEngine.Math;
 using UnityEngine;
+using Quaternion = System.Numerics.Quaternion;
+using Vector3 = System.Numerics.Vector3;
 
 namespace ImperialStudio.Core.UnityEngine.Entities
 {
@@ -14,12 +17,12 @@ namespace ImperialStudio.Core.UnityEngine.Entities
 
         protected override Vector3 GetCurrentValue()
         {
-            return m_Transform.rotation.eulerAngles;
+            return m_Transform.rotation.eulerAngles.ToSystemVector();
         }
 
         protected override void OnUpdateState(Vector3 oldValue, Vector3 newValue)
         {
-            m_Transform.rotation = Quaternion.Euler(newValue);
+            m_Transform.rotation = global::UnityEngine.Quaternion.Euler(newValue.ToUnityVector());
         }
     }
 }

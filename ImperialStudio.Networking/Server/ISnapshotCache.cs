@@ -1,4 +1,6 @@
-﻿namespace ImperialStudio.Networking.Server
+﻿using ImperialStudio.Api.Networking;
+
+namespace ImperialStudio.Networking.Server
 {
     public interface ISnapshotCache
     {

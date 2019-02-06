@@ -1,8 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Mime;
 using System.Threading;
 using ENet;
+using Facepunch.Steamworks;
+using ImperialStudio.Api.Eventing;
+using ImperialStudio.Api.Game;
+using ImperialStudio.Api.Map;
+using ImperialStudio.Api.Networking;
+using ImperialStudio.Api.Serialization;
+using ImperialStudio.Core.Logging;
 using ImperialStudio.Networking.Events;
 using ImperialStudio.Networking.Packets.Handlers;
 using EventType = ENet.EventType;
@@ -74,7 +82,7 @@ namespace ImperialStudio.Networking.Server
             catch (Exception ex)
             {
                 m_Logger.LogError($"Failed to host server. Is port {listenParameters.Port} already being used?", ex);
-                Application.Quit(1);
+                Environment.Exit(1);
                 return;
             }
 
@@ -179,7 +187,7 @@ namespace ImperialStudio.Networking.Server
 
             if (UseCustomPingHandler)
             {
-                var toDisconnect = new Boo.Lang.List<PendingPing>();
+                var toDisconnect = new List<PendingPing>();
 
                 foreach (var pendingPing in m_PendingPings)
                 {

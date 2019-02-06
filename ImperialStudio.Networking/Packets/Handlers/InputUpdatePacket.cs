@@ -1,4 +1,8 @@
-﻿namespace ImperialStudio.Networking.Packets.Handlers
+﻿using ImperialStudio.Api.Networking.Packets;
+using ImperialStudio.Core.Serialization;
+using ZeroFormatter;
+
+namespace ImperialStudio.Networking.Packets.Handlers
 {
     [PacketType(PacketType.InputUpdate)]
     [ZeroFormattable]
@@ -7,8 +11,8 @@
         [Index(0)]
         public virtual int EntityId { get; set; }
         [Index(1)]
-        public virtual SerializableVector3 Position { get; set; }
+        public virtual SVector3? Position { get; set; }
         [Index(2)]
-        public virtual SerializableVector3 Rotation { get; set; }
+        public virtual SVector3? Rotation { get; set; }
     }
 }

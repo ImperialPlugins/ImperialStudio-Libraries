@@ -1,4 +1,7 @@
 ﻿using System.Collections.Generic;
+using ImperialStudio.Api.Entities;
+using ImperialStudio.Api.Networking.Packets;
+using ZeroFormatter;
 
 namespace ImperialStudio.Networking.Packets.Handlers
 {

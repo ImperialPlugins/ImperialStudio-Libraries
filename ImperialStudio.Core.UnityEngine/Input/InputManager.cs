@@ -26,7 +26,7 @@ namespace ImperialStudio.Core.UnityEngine.Input
                 throw new ArgumentException($"Key is not registered: \"{keyName}\"", nameof(keyName));
             }
 
-            return Input.GetKeyDown(_keyMappings[keyName]);
+            return global::UnityEngine.Input.GetKeyDown(_keyMappings[keyName]);
         }
 
         public bool GetKeyDown(BuiltInKeys builtInKey)
@@ -44,7 +44,7 @@ namespace ImperialStudio.Core.UnityEngine.Input
                 throw new ArgumentException($"Key is not registered: \"{keyName}\"", nameof(keyName));
             }
 
-            return Input.GetKeyUp(_keyMappings[keyName]);
+            return global::UnityEngine.Input.GetKeyUp(_keyMappings[keyName]);
         }
 
         public bool GetKeyUp(BuiltInKeys builtInKey)
@@ -62,7 +62,7 @@ namespace ImperialStudio.Core.UnityEngine.Input
                 throw new ArgumentException($"Key is not registered: \"{keyName}\"", nameof(keyName));
             }
 
-            return Input.GetKey(_keyMappings[keyName]);
+            return global::UnityEngine.Input.GetKey(_keyMappings[keyName]);
         }
 
         public bool GetKey(BuiltInKeys builtInKey)

@@ -1,4 +1,5 @@
-﻿using ImperialStudio.Core.Eventing;
+﻿using ImperialStudio.Api.Networking;
+using ImperialStudio.Core.Eventing;
 
 namespace ImperialStudio.Networking.Events
 {

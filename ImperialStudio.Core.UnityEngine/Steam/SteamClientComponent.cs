@@ -50,18 +50,7 @@ namespace ImperialStudio.Core.UnityEngine.Steam
 	
         private void Update()
         {
-            if (Client == null)
-                return;
-
-            try
-            {
-                UnityEngine.Profiling.Profiler.BeginSample("Steam Client Update");
-                Client.Update();
-            }
-            finally
-            {
-                UnityEngine.Profiling.Profiler.EndSample();
-            }
+            Client?.Update();
         }
 
         private void OnDestroy()

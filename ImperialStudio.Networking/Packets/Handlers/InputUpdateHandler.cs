@@ -1,4 +1,10 @@
-﻿using ILogger = ImperialStudio.Api.Logging.ILogger;
+﻿using System.Numerics;
+using ImperialStudio.Api.Entities;
+using ImperialStudio.Api.Game;
+using ImperialStudio.Api.Networking;
+using ImperialStudio.Api.Scheduling;
+using ImperialStudio.Api.Serialization;
+using ILogger = ImperialStudio.Api.Logging.ILogger;
 
 namespace ImperialStudio.Networking.Packets.Handlers
 {
@@ -23,7 +29,7 @@ namespace ImperialStudio.Networking.Packets.Handlers
         protected override void OnHandleVerifiedPacket(INetworkPeer sender, InputUpdatePacket incomingPacket)
         {
             var entity = m_EntityManager.GetEntitiy(incomingPacket.EntityId);
-            if (entity?.Transform == null)
+            if (!(entity is IWorldEntity worldEntity))
             {
                 return;
             }
@@ -32,12 +38,12 @@ namespace ImperialStudio.Networking.Packets.Handlers
             {
                 if (incomingPacket.Position != null)
                 {
-                    entity.Transform.position = incomingPacket.Position;
+                    worldEntity.Position = incomingPacket.Position.Value;
                 }
 
                 if (incomingPacket.Rotation != null)
                 {
-                    entity.Transform.rotation = Quaternion.Euler(incomingPacket.Rotation);
+                    worldEntity.Rotation = incomingPacket.Rotation.Value;
                 }
             }, "InputUpdate-" + sender.Id);
         }

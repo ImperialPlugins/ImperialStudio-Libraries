@@ -1,13 +1,21 @@
 ﻿using System;
 using System.Linq;
 using ENet;
+using ImperialStudio.Api.Entities;
+using ImperialStudio.Api.Eventing;
+using ImperialStudio.Api.Game;
+using ImperialStudio.Api.Logging;
+using ImperialStudio.Api.Networking;
+using ImperialStudio.Api.Scheduling;
+using ImperialStudio.Api.Serialization;
+using ImperialStudio.Core.Logging;
 using ImperialStudio.Core.Serialization;
 using ImperialStudio.Networking.Events;
 using NetStack.Serialization;
 
 namespace ImperialStudio.Networking.Packets.Handlers
 {
-    [PacketType(Packets.PacketType.WorldUpdate)]
+    [PacketType(PacketType.WorldUpdate)]
     public class WorldUpdateHandler : BasePacketHandler<WorldUpdatePacket>
     {
         private readonly IEntityManager m_EntityManager;

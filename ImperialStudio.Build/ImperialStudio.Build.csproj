@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="$(MSBuildThisFileDirectory)..\targets\ProjectShared.targets" />
+
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ImperialStudio.Api\ImperialStudio.Api.csproj" />
+    <ProjectReference Include="..\ImperialStudio.Core.UnityEngine\ImperialStudio.Core.UnityEngine.csproj" />
+    <ProjectReference Include="..\ImperialStudio.Core\ImperialStudio.Core.csproj" />
+    <ProjectReference Include="..\ImperialStudio.Networking\ImperialStudio.Networking.csproj" />
+  </ItemGroup>
+
+  <Target Name="PrepareUnity" AfterTargets="AfterBuild">
+    <PropertyGroup>
+      <UnityFolder>$(MSBuildThisFileDirectory)..\..\Assets\ImperialStudio</UnityFolder>
+    </PropertyGroup>
+    <ItemGroup>
+      <ToDelete Include="$(OutDir)ImperialStudio.Build.dll;$(OutDir)netstandard.dll" />
+      <ToMove Include="$(OutDir)**\*.*" Exclude="@(ToDelete)" />
+    </ItemGroup>
+
+    <Delete Files="@(ToDelete)"></Delete>
+    <Move SourceFiles="@(ToMove)" DestinationFolder="$(UnityFolder)\%(RecursiveDir)"/>
+  </Target>
+
+</Project>

@@ -1,4 +1,5 @@
 ﻿using ImperialStudio.Api.Networking.Packets;
+using ZeroFormatter;
 
 namespace ImperialStudio.Networking.Packets.Handlers
 {

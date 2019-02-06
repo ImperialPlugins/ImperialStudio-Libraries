@@ -1,4 +1,8 @@
-﻿namespace ImperialStudio.Networking.Packets.Handlers
+﻿using Facepunch.Steamworks;
+using ImperialStudio.Api.Networking.Packets;
+using ZeroFormatter;
+
+namespace ImperialStudio.Networking.Packets.Handlers
 {
     [PacketType(PacketType.Terminate)]
     [ZeroFormattable]

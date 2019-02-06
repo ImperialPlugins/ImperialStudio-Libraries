@@ -1,4 +1,7 @@
-﻿namespace ImperialStudio.Networking.Packets.Handlers
+﻿using ImperialStudio.Api.Networking.Packets;
+using ZeroFormatter;
+
+namespace ImperialStudio.Networking.Packets.Handlers
 {
     [PacketType(PacketType.Pong)]
     [ZeroFormattable]

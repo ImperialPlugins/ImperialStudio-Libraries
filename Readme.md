@@ -7,9 +7,17 @@ Some features include:
 * IoC container for services
 * Abstractions. A lot of them. Any component is replacable.
 * A Unity project/library that actually uses modern C# with lots of OOP, patterns, etc.
+* Steamworks integration
 
 # Compiling
-If you want to compile the Unity projects, copy "UnityEngine.CoreModule.dll", "UnityEngine.PhysicsModule.dll", "UnityEngine.ProfilerModule.dll" and "UnityEngine.dll" into the Libraries folder. If you are using an older version of Unity, just copying "UnityEngine.dll" should be sufficient.
+If you want to compile the Unity projects, copy the following files into the Libraries folder:
+* UnityEngine.dll
+* UnityEngine.CoreModule.dll
+* UnityEngine.InputModule.dll
+* UnityEngine.ProfilerModule.dll
+* UnityEngine.PhysicsModule.dll 
+
+On older versions of Unity, just copying "UnityEngine.dll" should be sufficient.
 
 ## License
 Copyright (c) 2019 Enes Sadık Özbek. All rights reserved. 

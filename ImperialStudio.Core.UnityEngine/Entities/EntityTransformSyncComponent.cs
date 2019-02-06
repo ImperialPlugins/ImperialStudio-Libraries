@@ -1,7 +1,12 @@
-﻿using ImperialStudio.Networking.Client;
+﻿using ImperialStudio.Api.Entities;
+using ImperialStudio.Api.Networking;
+using ImperialStudio.Core.UnityEngine.DependencyInjection;
+using ImperialStudio.Networking.Client;
 using ImperialStudio.Networking.Packets.Handlers;
+using UnityEngine;
+using Vector3 = System.Numerics.Vector3;
 
-namespace ImperialStudio.Networking.Entities
+namespace ImperialStudio.Core.UnityEngine.Entities
 {
     public class EntityTransformSyncComponent : MonoBehaviour
     {
@@ -23,20 +28,20 @@ namespace ImperialStudio.Networking.Entities
                 return;
             }
 
-            if (Entity?.Transform == null)
+            if (!(Entity is IWorldEntity worldEntity))
             {
                 return;
             }
 
             InputUpdatePacket packet = new InputUpdatePacket { EntityId = Entity.Id };
 
-            if (Entity.Transform.position != m_LastPosition)
+            if (worldEntity.Position != m_LastPosition)
             {
-                packet.Position = Entity.Transform.position;
+                packet.Position = worldEntity.Position;
                 m_LastPosition = packet.Position;
             }
 
-            var eulerRotation = Entity.Transform.rotation.eulerAngles;
+            var eulerRotation = worldEntity.Rotation;
             if (eulerRotation != m_LastRotation)
             {
                 packet.Rotation = eulerRotation;
