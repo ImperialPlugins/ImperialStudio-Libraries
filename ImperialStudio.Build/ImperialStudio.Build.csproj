@@ -18,7 +18,7 @@
       <UnityFolder>$(MSBuildThisFileDirectory)..\..\Assets\ImperialStudio</UnityFolder>
     </PropertyGroup>
     <ItemGroup>
-      <ToDelete Include="$(OutDir)ImperialStudio.Build.dll;$(OutDir)netstandard.dll" />
+      <ToDelete Include="$(OutDir)ImperialStudio.Build.dll;$(OutDir)netstandard.*;$(OutDir)System.Runtime.CompilerServices.Unsafe.*" />
       <ToMove Include="$(OutDir)**\*.*" Exclude="@(ToDelete)" />
     </ItemGroup>
 
