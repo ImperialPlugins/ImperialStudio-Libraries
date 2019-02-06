@@ -24,10 +24,10 @@ namespace ImperialStudio.Core.Entities
             if (Owner?.Username != null)
                 Name += $"({Owner.Username})";
 
-            OnInit();
-
             EntityStates = new List<IEntityState>();
             EntityStates.Add(new EntityNameState(this));
+
+            OnInit();
 
             m_Inited = true;
         }
