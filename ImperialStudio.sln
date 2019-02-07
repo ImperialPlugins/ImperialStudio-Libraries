@@ -17,7 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImperialStudio.Networking",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Disruptor", "Disruptor\Disruptor.csproj", "{3749BA34-0485-44BE-BCE0-5905E85CCEAF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImperialStudio.Build", "ImperialStudio.Build\ImperialStudio.Build.csproj", "{B172348D-3F36-49CB-8CBE-30C17C1D8647}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImperialStudio.Build.UnityEngine", "ImperialStudio.Build.UnityEngine\ImperialStudio.Build.UnityEngine.csproj", "{B172348D-3F36-49CB-8CBE-30C17C1D8647}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
