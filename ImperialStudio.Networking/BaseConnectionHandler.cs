@@ -9,9 +9,7 @@ using ENet;
 using ImperialStudio.Api.Eventing;
 using ImperialStudio.Api.Game;
 using ImperialStudio.Api.Networking;
-using ImperialStudio.Api.Networking.Packets;
 using ImperialStudio.Api.Serialization;
-using ImperialStudio.Core.Events;
 using ImperialStudio.Networking.Events;
 using ImperialStudio.Networking.Packets;
 using ImperialStudio.Networking.Server;
@@ -45,7 +43,7 @@ namespace ImperialStudio.Networking
 
         protected BaseConnectionHandler(IObjectSerializer packetSerializer, IIncomingNetworkEventHandler networkEventProcessor, ILogger logger, IEventBus eventBus, IGamePlatformAccessor gamePlatformAccessor)
         {
-            eventBus.Subscribe<ApplicationQuitEvent>(this, (s, e) => { Dispose(); });
+            eventBus.Subscribe<GameQuitEvent>(this, (s, e) => { Dispose(); });
 
             m_EventBus = eventBus;
             m_PacketSerializer = packetSerializer;
@@ -205,10 +203,10 @@ namespace ImperialStudio.Networking
                     break;
             }
 
-            NetworkEvent networkEvent = new NetworkEvent(@event, networkPeer);
-            m_EventBus.Emit(this, networkEvent);
+            ENetNetworkEvent enetEvent = new ENetNetworkEvent(@event, networkPeer);
+            m_EventBus.Emit(this, enetEvent);
 
-            if (networkEvent.IsCancelled)
+            if (enetEvent.IsCancelled)
                 return;
 
             m_NetworkEventProcessor.ProcessNetworkEvent(@event, networkPeer);

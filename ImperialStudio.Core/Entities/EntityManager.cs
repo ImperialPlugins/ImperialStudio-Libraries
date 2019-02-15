@@ -1,15 +1,17 @@
 ﻿using Castle.Windsor;
 using ImperialStudio.Api.Entities;
 using ImperialStudio.Api.Eventing;
-using ImperialStudio.Api.Networking;
 using ImperialStudio.Api.Scheduling;
-using ImperialStudio.Core.DependencyInjection;
 using ImperialStudio.Core.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Threading;
+using ImperialStudio.Api.Networking;
+using ImperialStudio.Extensions.DependencyInjection;
+using ImperialStudio.Extensions.Logging;
+using ImperialStudio.Networking;
 using ILogger = ImperialStudio.Api.Logging.ILogger;
 
 namespace ImperialStudio.Core.Entities
@@ -41,7 +43,7 @@ namespace ImperialStudio.Core.Entities
             m_TaskScheduler.RunOnMainThread(this, () =>
                 {
                     var allEntities = GetEntities().ToList();
-                    foreach (var ent in allEntities.Where(d => d.Owner.Id == owner.Id))
+                    foreach (var ent in allEntities.Where(d => d.OwnerId == owner.Id))
                     {
                         Despawn(ent);
                     }
@@ -137,7 +139,7 @@ namespace ImperialStudio.Core.Entities
 
                         var entityInstance = (TEntity)m_Container.Activate(typeof(TEntity));
                         entityInstance.Id = idToUse;
-                        entityInstance.Owner = owner;
+                        entityInstance.OwnerId = owner.Id;
                         entityInstance.Init();
                         lock (m_SpawnedEntities)
                         {

@@ -3,6 +3,7 @@ using System.IO;
 using Castle.Windsor;
 using ImperialStudio.Api.Logging;
 using ImperialStudio.Core.Reflection;
+using ImperialStudio.Extensions.Reflection;
 
 namespace ImperialStudio.Core.Logging
 {

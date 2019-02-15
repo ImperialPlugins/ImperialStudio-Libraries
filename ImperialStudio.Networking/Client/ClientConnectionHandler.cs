@@ -3,10 +3,9 @@ using Castle.Windsor;
 using ENet;
 using ImperialStudio.Api.Eventing;
 using ImperialStudio.Api.Game;
-using ImperialStudio.Api.Networking;
 using ImperialStudio.Api.Scheduling;
 using ImperialStudio.Api.Serialization;
-using ImperialStudio.Core.Logging;
+using ImperialStudio.Extensions.Logging;
 using ImperialStudio.Networking.Events;
 using ImperialStudio.Networking.Packets.Handlers;
 using ILogger = ImperialStudio.Api.Logging.ILogger;
@@ -27,7 +26,7 @@ namespace ImperialStudio.Networking.Client
             m_TaskScheduler = taskScheduler;
             m_Container = container;
             m_Logger = logger;
-            eventBus.Subscribe<NetworkEvent>(this, OnNetworkEvent);
+            eventBus.Subscribe<ENetNetworkEvent>(this, OnNetworkEvent);
         }
 
         private readonly ITaskScheduler m_TaskScheduler;
@@ -136,9 +135,9 @@ namespace ImperialStudio.Networking.Client
             base.Dispose();
         }
 
-        private void OnNetworkEvent(object sender, NetworkEvent @event)
+        private void OnNetworkEvent(object sender, ENetNetworkEvent @event)
         {
-            if (@event.EnetEvent.Type == EventType.Connect)
+            if (@event.Event.Type == EventType.Connect)
             {
                 if (!m_ConnectingToServer)
                     return; //handle other peers

@@ -4,10 +4,10 @@ using System.Linq;
 using System.Threading;
 using ImperialStudio.Api.Eventing;
 using ImperialStudio.Api.Scheduling;
-using ImperialStudio.Core.DependencyInjection;
 using ImperialStudio.Core.Logging;
-using ImperialStudio.Core.Scheduling;
 using ImperialStudio.Core.UnityEngine.DependencyInjection;
+using ImperialStudio.Extensions.Logging;
+using ImperialStudio.Extensions.Scheduling;
 using UnityEngine;
 using ILogger = ImperialStudio.Api.Logging.ILogger;
 

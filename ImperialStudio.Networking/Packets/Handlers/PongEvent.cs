@@ -1,9 +1,9 @@
-﻿using ImperialStudio.Api.Networking;
-using ImperialStudio.Core.Eventing;
+﻿using ImperialStudio.Api.Eventing;
+using ImperialStudio.Api.Networking;
 
 namespace ImperialStudio.Networking.Packets.Handlers
 {
-    public sealed class PongEvent : Event
+    public sealed class PongEvent : IEvent
     {
         public PongEvent(INetworkPeer peer, PongPacket pongPacket)
         {

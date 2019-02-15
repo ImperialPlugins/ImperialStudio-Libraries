@@ -10,6 +10,7 @@
     <ProjectReference Include="..\ImperialStudio.Api\ImperialStudio.Api.csproj" />
     <ProjectReference Include="..\ImperialStudio.Core.UnityEngine\ImperialStudio.Core.UnityEngine.csproj" />
     <ProjectReference Include="..\ImperialStudio.Core\ImperialStudio.Core.csproj" />
+    <ProjectReference Include="..\ImperialStudio.Extensions\ImperialStudio.Extensions.csproj" />
     <ProjectReference Include="..\ImperialStudio.Networking\ImperialStudio.Networking.csproj" />
   </ItemGroup>
 
@@ -23,7 +24,7 @@
     </ItemGroup>
 
     <Delete Files="@(ToDelete)"></Delete>
-    <Move SourceFiles="@(ToMove)" DestinationFolder="$(UnityFolder)\%(RecursiveDir)"/>
+    <Move SourceFiles="@(ToMove)" DestinationFolder="$(UnityFolder)\%(RecursiveDir)" ContinueOnError="true" />
   </Target>
 
 </Project>

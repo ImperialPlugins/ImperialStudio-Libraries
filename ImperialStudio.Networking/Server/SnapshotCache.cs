@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using ImperialStudio.Api.Networking;
-using ImperialStudio.Core.Util;
+using ImperialStudio.Extensions.Util;
 
 namespace ImperialStudio.Networking.Server
 {

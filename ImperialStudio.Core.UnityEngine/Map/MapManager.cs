@@ -3,7 +3,6 @@ using ImperialStudio.Api.Eventing;
 using ImperialStudio.Api.Game;
 using ImperialStudio.Api.Map;
 using ImperialStudio.Api.Scheduling;
-using ImperialStudio.Core.Map;
 using UnityEngine.SceneManagement;
 
 namespace ImperialStudio.Core.UnityEngine.Map

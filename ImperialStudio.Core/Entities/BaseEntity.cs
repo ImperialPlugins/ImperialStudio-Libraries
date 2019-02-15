@@ -1,18 +1,22 @@
-﻿using ImperialStudio.Api.Entities;
+﻿using System.Text;
+using ImperialStudio.Api.Entities;
 using ImperialStudio.Api.Networking;
-using NetStack.Serialization;
-using System.Collections.Generic;
+using ImperialStudio.Api.Serialization;
+using ImperialStudio.Networking;
+using ImperialStudio.Networking.State;
 
 namespace ImperialStudio.Core.Entities
 {
-    public abstract class BaseEntity : IEntity
+    public abstract class BaseEntity : NetworkComponent, IEntity
     {
+        private readonly IConnectionHandler m_ConnectionHandler;
         public int Id { get; set; }
-        public virtual string Name { get; set; }
 
-        public INetworkPeer Owner { get; set; }
+        [NetworkState]
+        public abstract string Name { get; set; }
+
+        public uint? OwnerId { get; set; }
         public bool IsDisposed { get; private set; }
-        protected List<IEntityState> EntityStates { get; private set; }
 
         private bool m_Inited;
         public void Init()
@@ -20,15 +24,24 @@ namespace ImperialStudio.Core.Entities
             if (m_Inited)
                 return;
 
-            Name = $"Entity[{GetType().Name.Replace("Entity", "")}]-{Id}";
-            if (Owner?.Username != null)
-                Name += $"({Owner.Username})";
+            StringBuilder nameBuilder = new StringBuilder();
+            nameBuilder.Append("Entity[");
+            nameBuilder.Append(GetType().Name.Replace("Entity", ""));
+            nameBuilder.Append("]-");
+            nameBuilder.Append(Id);
 
-            EntityStates = new List<IEntityState>();
-            EntityStates.Add(new EntityNameState(this));
-
+            if (OwnerId != null)
+            {
+                var owner = m_ConnectionHandler.GetPeerByNetworkId(OwnerId.Value);
+                if (owner?.Username != null)
+                {
+                    nameBuilder.Append("(");
+                    nameBuilder.Append(owner.Username);
+                    nameBuilder.Append(")");
+                }
+            }
+            
             OnInit();
-
             m_Inited = true;
         }
 
@@ -45,34 +58,13 @@ namespace ImperialStudio.Core.Entities
 
         public bool IsOwner { get; set; }
 
-        public void Read(BitBuffer bitBuffer)
-        {
-            foreach (var state in EntityStates)
-            {
-                bool isDelta = bitBuffer.ReadBool();
 
-                if (isDelta)
-                    state.ReadDelta(bitBuffer);
-                else
-                    state.Read(bitBuffer);
-            }
-        }
-
-        public void Write(BitBuffer buffer, BitBuffer previousState = null)
-        {
-            bool isDelta = previousState != null;
-
-            foreach (var state in EntityStates)
-            {
-                buffer.AddBool(isDelta);
-
-                if (isDelta)
-                    state.WriteDelta(buffer, previousState);
-                else
-                    state.Write(buffer);
-            }
-        }
 
         protected abstract void OnDispose();
+
+        protected BaseEntity(IObjectSerializer serializer, IConnectionHandler connectionHandler) : base(serializer)
+        {
+            m_ConnectionHandler = connectionHandler;
+        }
     }
 }

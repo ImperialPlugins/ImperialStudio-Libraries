@@ -5,10 +5,9 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
-
+  
   <ItemGroup>
-    <ProjectReference Include="..\ENet\ENet.csproj" />
-    <ProjectReference Include="..\NetStack\NetStack.csproj" />
+    <PackageReference Include="System.Memory" Version="4.5.2" />
   </ItemGroup>
 
 </Project>

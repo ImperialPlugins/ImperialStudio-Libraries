@@ -7,12 +7,18 @@
   </PropertyGroup>
   
   <ItemGroup>
+    <PackageReference Include="Castle.Windsor" Version="5.0.0-beta001" />
     <PackageReference Include="Facepunch.Steamworks" Version="0.7.5" />
+    <PackageReference Include="MessagePack" Version="1.7.3.4" />
+    <PackageReference Include="MessagePackAnalyzer" Version="1.6.0" />
+    <PackageReference Include="System.Memory" Version="4.5.2" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Disruptor\Disruptor.csproj" />
-    <ProjectReference Include="..\ImperialStudio.Core\ImperialStudio.Core.csproj" />
+    <ProjectReference Include="..\ENet\ENet.csproj" />
+    <ProjectReference Include="..\ImperialStudio.Api\ImperialStudio.Api.csproj" />
+    <ProjectReference Include="..\ImperialStudio.Extensions\ImperialStudio.Extensions.csproj" />
   </ItemGroup>
 
 </Project>

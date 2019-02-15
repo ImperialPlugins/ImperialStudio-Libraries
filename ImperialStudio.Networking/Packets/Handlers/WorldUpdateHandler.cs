@@ -8,10 +8,8 @@ using ImperialStudio.Api.Logging;
 using ImperialStudio.Api.Networking;
 using ImperialStudio.Api.Scheduling;
 using ImperialStudio.Api.Serialization;
-using ImperialStudio.Core.Logging;
-using ImperialStudio.Core.Serialization;
+using ImperialStudio.Extensions.Logging;
 using ImperialStudio.Networking.Events;
-using NetStack.Serialization;
 
 namespace ImperialStudio.Networking.Packets.Handlers
 {
@@ -37,13 +35,13 @@ namespace ImperialStudio.Networking.Packets.Handlers
 
             if (gamePlatformAccessor.GamePlatform == GamePlatform.Server)
             {
-                eventBus.Subscribe<NetworkEvent>(this, OnNetworkEvent);
+                eventBus.Subscribe<ENetNetworkEvent>(this, OnNetworkEvent);
             }
         }
 
-        private void OnNetworkEvent(object sender, NetworkEvent @event)
+        private void OnNetworkEvent(object sender, ENetNetworkEvent @event)
         {
-            if (@event.EnetEvent.Type == EventType.Disconnect || @event.EnetEvent.Type == EventType.Timeout)
+            if (@event.Event.Type == EventType.Disconnect || @event.Event.Type == EventType.Timeout)
             {
                 m_EntityManager.DespawnEntities(@event.NetworkPeer);
             }
@@ -68,16 +66,14 @@ namespace ImperialStudio.Networking.Packets.Handlers
                 foreach (var statePair in incomingPacket.EntityStates.Where(d =>
                     incomingPacket.Spawns.All(e => e.Id != d.Key)))
                 {
-
                     var entity = m_EntityManager.GetEntitiy(statePair.Key);
                     if (entity == null)
                         return;
 
                     var state = statePair.Value;
-                    BitBuffer bitBuffer = new BitBuffer(state.Length);
-                    bitBuffer.AddBytes(state);
 
-                    entity.Read(bitBuffer);
+                    Span<byte> stateSpan = new Span<byte>(state);
+                    entity.Read(stateSpan);
                 }
             }, "UpdateEntities");
 

@@ -1,13 +1,12 @@
-﻿using ImperialStudio.Api.Networking.Packets;
-using ZeroFormatter;
+﻿using MessagePack;
 
 namespace ImperialStudio.Networking.Packets.Handlers
 {
     [PacketType(PacketType.Ping)]
-    [ZeroFormattable]
+    [MessagePackObject]
     public class PingPacket : IPacket
     {
-        [Index(0)]
+        [Key(0)]
         public virtual ulong PingId { get; set; }
     }
 }

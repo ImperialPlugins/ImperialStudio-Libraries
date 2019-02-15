@@ -1,17 +1,16 @@
 ﻿using Facepunch.Steamworks;
-using ImperialStudio.Api.Networking.Packets;
-using ZeroFormatter;
+using MessagePack;
 
 namespace ImperialStudio.Networking.Packets.Handlers
 {
     [PacketType(PacketType.Terminate)]
-    [ZeroFormattable]
+    [MessagePackObject]
     public class TerminatePacket : IPacket
     {
-        [Index(0)]
+        [Key(0)]
         public virtual string Reason { get; set; }
 
-        [Index(1)]
+        [Key(1)]
         public virtual ServerAuth.Status AuthFailureReason { get; set; }
     }
 }

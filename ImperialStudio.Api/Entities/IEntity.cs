@@ -1,19 +1,15 @@
 ﻿using ImperialStudio.Api.Networking;
-using NetStack.Serialization;
 
 namespace ImperialStudio.Api.Entities
 {
-    public interface IEntity
+    public interface IEntity : INetworkComponent
     {
         int Id { get; set; }
         string Name { get; set; }
-        INetworkPeer Owner { get; set; }
+        uint? OwnerId { get; set; }
         bool IsDisposed { get; }
         void Init();
         void Dispose();
         bool IsOwner { get; set; }
-
-        void Read(BitBuffer newState);
-        void Write(BitBuffer buffer, BitBuffer previousState = null);
     }
 }

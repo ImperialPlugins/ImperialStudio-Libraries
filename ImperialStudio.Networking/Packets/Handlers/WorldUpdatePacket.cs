@@ -1,25 +1,24 @@
 ﻿using System.Collections.Generic;
 using ImperialStudio.Api.Entities;
-using ImperialStudio.Api.Networking.Packets;
-using ZeroFormatter;
+using MessagePack;
 
 namespace ImperialStudio.Networking.Packets.Handlers
 {
     [PacketType(PacketType.WorldUpdate)]
-    [ZeroFormattable]
+    [MessagePackObject]
     public class WorldUpdatePacket: IPacket
     {
-        [Index(0)]
+        [Key(0)]
         public virtual IEnumerable<WorldSpawn> Spawns { get; set; }
 
-        [Index(1)]
+        [Key(1)]
         public virtual IDictionary<int, byte[]> EntityStates { get; set; }
 
-        [Index(2)]
+        [Key(2)]
         public virtual IEnumerable<int> Despawns { get; set; }
     }
 
-    [ZeroFormattable]
+    [MessagePackObject]
     public class WorldSpawn
     {
         public WorldSpawn(IEntity entity)
@@ -33,13 +32,13 @@ namespace ImperialStudio.Networking.Packets.Handlers
             
         }
 
-        [Index(0)]
+        [Key(0)]
         public virtual int Id { get; set; }
 
-        [Index(1)]
+        [Key(1)]
         public virtual string Type { get; set; }
 
-        [Index(2)]
+        [Key(2)]
         public virtual bool IsOwner { get; set; }
     }
 }

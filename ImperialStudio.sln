@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImperialStudio.Api", "Imper
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ENet", "ENet\ENet.csproj", "{630762D5-BFA2-4A08-8AA3-063696363AE9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetStack", "NetStack\NetStack.csproj", "{6C43A245-6156-4306-9E8B-A5A6B9FA81BB}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImperialStudio.Core", "ImperialStudio.Core\ImperialStudio.Core.csproj", "{56DDAB26-D5ED-46C9-94C4-4748C7F7F819}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImperialStudio.Core.UnityEngine", "ImperialStudio.Core.UnityEngine\ImperialStudio.Core.UnityEngine.csproj", "{B388D0D7-DA07-4B3F-8E15-1CAB5D2F3AD2}"
@@ -18,6 +16,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Disruptor", "Disruptor\Disruptor.csproj", "{3749BA34-0485-44BE-BCE0-5905E85CCEAF}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImperialStudio.Build.UnityEngine", "ImperialStudio.Build.UnityEngine\ImperialStudio.Build.UnityEngine.csproj", "{B172348D-3F36-49CB-8CBE-30C17C1D8647}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImperialStudio.Extensions", "ImperialStudio.Extensions\ImperialStudio.Extensions.csproj", "{D02CBBF7-3A60-4815-BDEE-B8D57B707969}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,10 +33,6 @@ Global
 		{630762D5-BFA2-4A08-8AA3-063696363AE9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{630762D5-BFA2-4A08-8AA3-063696363AE9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{630762D5-BFA2-4A08-8AA3-063696363AE9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6C43A245-6156-4306-9E8B-A5A6B9FA81BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6C43A245-6156-4306-9E8B-A5A6B9FA81BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6C43A245-6156-4306-9E8B-A5A6B9FA81BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6C43A245-6156-4306-9E8B-A5A6B9FA81BB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{56DDAB26-D5ED-46C9-94C4-4748C7F7F819}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{56DDAB26-D5ED-46C9-94C4-4748C7F7F819}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{56DDAB26-D5ED-46C9-94C4-4748C7F7F819}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -57,6 +53,10 @@ Global
 		{B172348D-3F36-49CB-8CBE-30C17C1D8647}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B172348D-3F36-49CB-8CBE-30C17C1D8647}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B172348D-3F36-49CB-8CBE-30C17C1D8647}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D02CBBF7-3A60-4815-BDEE-B8D57B707969}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D02CBBF7-3A60-4815-BDEE-B8D57B707969}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D02CBBF7-3A60-4815-BDEE-B8D57B707969}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D02CBBF7-3A60-4815-BDEE-B8D57B707969}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

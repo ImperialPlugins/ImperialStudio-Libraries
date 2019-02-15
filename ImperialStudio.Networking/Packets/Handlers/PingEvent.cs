@@ -1,10 +1,9 @@
 ﻿using ImperialStudio.Api.Eventing;
 using ImperialStudio.Api.Networking;
-using ImperialStudio.Core.Eventing;
 
 namespace ImperialStudio.Networking.Packets.Handlers
 {
-    public sealed class PingEvent : Event, ICancellableEvent
+    public sealed class PingEvent : IEvent, ICancellableEvent
     {
         public PingEvent(INetworkPeer sender, PingPacket pingPacket)
         {

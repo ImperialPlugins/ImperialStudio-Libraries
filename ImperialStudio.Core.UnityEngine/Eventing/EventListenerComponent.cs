@@ -1,5 +1,5 @@
 ﻿using ImperialStudio.Api.Eventing;
-using ImperialStudio.Core.Events;
+using ImperialStudio.Api.Game;
 using ImperialStudio.Core.UnityEngine.DependencyInjection;
 using UnityEngine;
 
@@ -12,7 +12,7 @@ namespace ImperialStudio.Core.UnityEngine.Eventing
 
         private void OnApplicationQuit()
         {
-            m_EventBus.Emit(this, new ApplicationQuitEvent());
+            m_EventBus.Emit(this, new GameQuitEvent());
         }
     }
 }

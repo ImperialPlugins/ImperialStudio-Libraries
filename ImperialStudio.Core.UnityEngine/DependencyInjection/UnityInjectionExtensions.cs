@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Reflection;
 using Castle.Windsor;
-using ImperialStudio.Core.DependencyInjection;
 using ImperialStudio.Core.Reflection;
 using JetBrains.Annotations;
 using UnityEngine;

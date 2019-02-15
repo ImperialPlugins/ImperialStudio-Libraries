@@ -1,6 +1,6 @@
 ﻿using ImperialStudio.Api.Entities;
-using ImperialStudio.Api.Networking;
 using ImperialStudio.Core.UnityEngine.DependencyInjection;
+using ImperialStudio.Networking;
 using ImperialStudio.Networking.Client;
 using ImperialStudio.Networking.Packets.Handlers;
 using UnityEngine;

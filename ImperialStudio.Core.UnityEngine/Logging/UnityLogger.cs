@@ -3,6 +3,7 @@ using Castle.Windsor;
 using ImperialStudio.Api.Logging;
 using ImperialStudio.Core.Logging;
 using ImperialStudio.Core.Reflection;
+using ImperialStudio.Extensions.Reflection;
 using UnityEngine;
 
 namespace ImperialStudio.Core.UnityEngine.Logging

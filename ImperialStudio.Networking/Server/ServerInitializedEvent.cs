@@ -1,8 +1,8 @@
-﻿using ImperialStudio.Core.Eventing;
+﻿using ImperialStudio.Api.Eventing;
 
 namespace ImperialStudio.Networking.Server
 {
-    public class ServerInitializedEvent: Event
+    public class ServerInitializedEvent: IEvent
     {
         public ServerListenParameters ListenParameters { get; }
 

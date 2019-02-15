@@ -7,6 +7,7 @@ using ImperialStudio.Api.Eventing;
 using ImperialStudio.Api.Logging;
 using ImperialStudio.Core.Logging;
 using ImperialStudio.Core.Reflection;
+using ImperialStudio.Extensions.Reflection;
 
 namespace ImperialStudio.Core.Eventing
 {
@@ -106,10 +107,12 @@ namespace ImperialStudio.Core.Eventing
 
             _inProgress.Add(@event);
 
+            var names = GetEventNames(@event.GetType());
+
             List<EventAction> actions =
                 _eventListeners
                     .Where(c => c.TargetEventType?.IsInstanceOfType(@event)
-                        ?? @event.Names.Any(d => c.TargetEventNames.Any(e => d.Equals(e, StringComparison.OrdinalIgnoreCase))))
+                        ?? names.Any(d => c.TargetEventNames.Any(e => d.Equals(e, StringComparison.OrdinalIgnoreCase))))
                     .ToList();
 
             actions.Sort((a, b) => EventPriorityComparer.Compare(a.Handler.Priority, b.Handler.Priority));
@@ -120,7 +123,7 @@ namespace ImperialStudio.Core.Eventing
                  where !(@event is ICancellableEvent)
                      || !((ICancellableEvent)@event).IsCancelled
                      || info.Handler.IgnoreCancelled
-                 where CheckEvent(info, @event.Names)
+                 where CheckEvent(info, names)
                  select info)
                 .ToList();
 
@@ -183,30 +186,33 @@ namespace ImperialStudio.Core.Eventing
             return eventNames.Any(c => GetEventNames(eventAction.TargetEventType).Any(d => d.Equals(c, StringComparison.OrdinalIgnoreCase)));
         }
 
-        public static List<string> GetEventNames(Type t)
+        private static readonly Dictionary<Type, string[]> m_EventNamesCache = new Dictionary<Type, string[]>();
+        public static IEnumerable<string> GetEventNames(Type t)
         {
-            List<string> names = new List<string>();
-            foreach (var type in t.GetTypeHierarchy())
+            if (!m_EventNamesCache.ContainsKey(t))
             {
-                if (!typeof(IEvent).IsAssignableFrom(type))
-                    break;
-
-                if (type == typeof(Event))
-                    break;
-
-                var attr = type.GetCustomAttributes(typeof(EventNameAttribute), false)
-                               .Cast<EventNameAttribute>()
-                               .ToList();
-                if (attr.Count == 0)
+                List<string> names = new List<string>();
+                foreach (var type in t.GetTypeHierarchy())
                 {
-                    names.Add(type.Name.Replace("Event", ""));
-                    continue;
+                    if (!typeof(IEvent).IsAssignableFrom(type))
+                        break;
+
+                    var attr = type.GetCustomAttributes(typeof(EventNameAttribute), false)
+                        .Cast<EventNameAttribute>()
+                        .ToList();
+                    if (attr.Count == 0)
+                    {
+                        names.Add(type.Name.Replace("Event", ""));
+                        continue;
+                    }
+
+                    names.AddRange(attr.Select(c => c.EventName));
                 }
 
-                names.AddRange(attr.Select(c => c.EventName));
+                m_EventNamesCache.Add(t, names.ToArray());
             }
 
-            return names;
+            return m_EventNamesCache[t];
         }
     }
 }

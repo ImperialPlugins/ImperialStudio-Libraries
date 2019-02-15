@@ -4,8 +4,8 @@ using Castle.Windsor;
 using ENet;
 using ImperialStudio.Api.Logging;
 using ImperialStudio.Api.Networking;
-using ImperialStudio.Api.Networking.Packets;
-using ImperialStudio.Core.DependencyInjection;
+using ImperialStudio.Extensions.DependencyInjection;
+using ImperialStudio.Networking.Packets;
 using ImperialStudio.Networking.Packets.Handlers;
 
 namespace ImperialStudio.Networking

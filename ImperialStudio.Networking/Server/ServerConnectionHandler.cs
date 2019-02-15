@@ -10,7 +10,7 @@ using ImperialStudio.Api.Game;
 using ImperialStudio.Api.Map;
 using ImperialStudio.Api.Networking;
 using ImperialStudio.Api.Serialization;
-using ImperialStudio.Core.Logging;
+using ImperialStudio.Extensions.Logging;
 using ImperialStudio.Networking.Events;
 using ImperialStudio.Networking.Packets.Handlers;
 using EventType = ENet.EventType;
@@ -94,12 +94,12 @@ namespace ImperialStudio.Networking.Server
             m_MapManager.ChangeMap(listenParameters.Map);
 
             m_EventBus.Emit(this, new ServerInitializedEvent(listenParameters));
-            m_EventBus.Subscribe<NetworkEvent>(this, OnNetworkEvent);
+            m_EventBus.Subscribe<ENetNetworkEvent>(this, OnNetworkEvent);
         }
 
-        private void OnNetworkEvent(object sender, NetworkEvent @event)
+        private void OnNetworkEvent(object sender, ENetNetworkEvent @event)
         {
-            if (@event.EnetEvent.Type == EventType.Disconnect || @event.EnetEvent.Type == EventType.Timeout)
+            if (@event.Event.Type == EventType.Disconnect || @event.Event.Type == EventType.Timeout)
             {
                 m_Snapshots.Clear(@event.NetworkPeer);
             }

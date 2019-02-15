@@ -1,13 +1,12 @@
-﻿using ImperialStudio.Api.Networking.Packets;
-using ZeroFormatter;
+﻿using MessagePack;
 
 namespace ImperialStudio.Networking.Packets.Handlers
 {
     [PacketType(PacketType.MapChange)]
-    [ZeroFormattable]
+    [MessagePackObject]
     public class MapChangePacket : IPacket
     {
-        [Index(0)]
+        [Key(0)]
         public virtual string MapName { get; set; }
     }
 }

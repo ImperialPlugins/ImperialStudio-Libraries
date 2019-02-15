@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using ImperialStudio.Api.Logging;
 using ImperialStudio.Core.Logging;
+using ImperialStudio.Extensions.Logging;
 
 namespace ImperialStudio.Core.Util
 {

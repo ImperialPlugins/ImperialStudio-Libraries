@@ -6,6 +6,8 @@ using System.Reflection;
 using Castle.Windsor;
 using ImperialStudio.Api.Logging;
 using ImperialStudio.Core.Reflection;
+using ImperialStudio.Extensions.Logging;
+using ImperialStudio.Extensions.Reflection;
 
 namespace ImperialStudio.Core.Logging
 {

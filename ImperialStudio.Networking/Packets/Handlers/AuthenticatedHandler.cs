@@ -1,8 +1,7 @@
 ﻿using ImperialStudio.Api.Game;
 using ImperialStudio.Api.Logging;
-using ImperialStudio.Api.Networking;
 using ImperialStudio.Api.Serialization;
-using ImperialStudio.Core.Logging;
+using ImperialStudio.Extensions.Logging;
 
 namespace ImperialStudio.Networking.Packets.Handlers
 {
