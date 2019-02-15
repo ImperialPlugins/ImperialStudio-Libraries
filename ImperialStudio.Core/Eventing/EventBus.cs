@@ -176,7 +176,7 @@ namespace ImperialStudio.Core.Eventing
             return handler;
         }
 
-        private bool CheckEvent(EventAction eventAction, IEnumerable<string> eventNames)
+        private bool CheckEvent(EventAction eventAction, IReadOnlyCollection<string> eventNames)
         {
             if (eventAction.TargetEventType == null)
             {
@@ -187,7 +187,7 @@ namespace ImperialStudio.Core.Eventing
         }
 
         private static readonly Dictionary<Type, string[]> m_EventNamesCache = new Dictionary<Type, string[]>();
-        public static IEnumerable<string> GetEventNames(Type t)
+        public static IReadOnlyCollection<string> GetEventNames(Type t)
         {
             if (!m_EventNamesCache.ContainsKey(t))
             {

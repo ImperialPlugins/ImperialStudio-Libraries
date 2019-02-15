@@ -24,7 +24,7 @@ namespace ImperialStudio.Networking
         public const byte ChannelUpperLimit = 255;
 
         private readonly RingBuffer<OutgoingPacket> m_OutgoingQueue;
-        private readonly ICollection<INetworkPeer> m_ConnectedPeers;
+        private readonly List<INetworkPeer> m_ConnectedPeers;
         private readonly IDictionary<byte, PacketDescription> m_PacketDescriptions;
 
         public bool IsListening { get; private set; }
@@ -285,18 +285,18 @@ namespace ImperialStudio.Networking
             }
         }
 
-        public IEnumerable<INetworkPeer> GetPeers(bool authenticatedOnly = true)
+        public IReadOnlyCollection<INetworkPeer> GetPeers(bool authenticatedOnly = true)
         {
-            IEnumerable<INetworkPeer> peers = m_ConnectedPeers;
+            IReadOnlyCollection<INetworkPeer> peers = m_ConnectedPeers;
             if (authenticatedOnly)
-                peers = peers.Where(d => d.IsAuthenticated);
+                peers = peers.Where(d => d.IsAuthenticated).ToList();
 
             return peers;
         }
 
-        public IEnumerable<INetworkPeer> GetPendingPeers()
+        public IReadOnlyCollection<INetworkPeer> GetPendingPeers()
         {
-            return m_ConnectedPeers.Where(d => !d.IsAuthenticated);
+            return m_ConnectedPeers.Where(d => !d.IsAuthenticated).ToList();
         }
 
         public void RegisterPeer(INetworkPeer networkPeer)

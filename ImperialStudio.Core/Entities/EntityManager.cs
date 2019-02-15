@@ -52,7 +52,7 @@ namespace ImperialStudio.Core.Entities
                 }, $"DespawnEntities-[{owner.Username}]");
         }
 
-        public IEnumerable<IEntity> GetEntities()
+        public IReadOnlyCollection<IEntity> GetEntities()
         {
             lock (m_SpawnedEntities)
             {
@@ -60,19 +60,19 @@ namespace ImperialStudio.Core.Entities
             }
         }
 
-        public IEnumerable<IEntity> GetEntities(Vector3 relativeTo, float radius)
+        public IReadOnlyCollection<IEntity> GetEntities(Vector3 relativeTo, float radius)
         {
-            return GetEntities().OfType<IWorldEntity>().Where(d => Vector3.Distance(relativeTo, d.Position) <= radius).Cast<IEntity>();
+            return GetEntities().OfType<IWorldEntity>().Where(d => Vector3.Distance(relativeTo, d.Position) <= radius).Cast<IEntity>().ToList();
         }
 
-        public IEnumerable<TEntity> GetEntities<TEntity>() where TEntity : class, IEntity
+        public IReadOnlyCollection<TEntity> GetEntities<TEntity>() where TEntity : class, IEntity
         {
-            return GetEntities().Where(c => c is TEntity).Cast<TEntity>();
+            return GetEntities().Where(c => c is TEntity).Cast<TEntity>().ToList();
         }
 
-        public IEnumerable<TEntity> GetEntities<TEntity>(Vector3 relativeTo, float radius) where TEntity : class, IEntity
+        public IReadOnlyCollection<TEntity> GetEntities<TEntity>(Vector3 relativeTo, float radius) where TEntity : class, IEntity
         {
-            return GetEntities<TEntity>().OfType<IWorldEntity>().Where(d => Vector3.Distance(relativeTo, d.Position) <= radius).Cast<TEntity>();
+            return GetEntities<TEntity>().OfType<IWorldEntity>().Where(d => Vector3.Distance(relativeTo, d.Position) <= radius).Cast<TEntity>().ToList();
         }
 
         public IEntity GetEntitiy(int id)

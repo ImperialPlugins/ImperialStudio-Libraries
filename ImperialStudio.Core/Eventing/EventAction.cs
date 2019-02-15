@@ -51,6 +51,6 @@ namespace ImperialStudio.Core.Eventing
 
         public IEventListener Listener { get; }
 
-        public IEnumerable<string> TargetEventNames { get; }
+        public IReadOnlyCollection<string> TargetEventNames { get; }
     }
 }

@@ -6,7 +6,7 @@ namespace ImperialStudio.Core.DependencyInjection
 {
     public class ServiceProxy<T> where T: class
     {
-        public IEnumerable<T> ProxiedServices => Container.ResolveAll<T>().Where(c => c != this);
+        public IReadOnlyCollection<T> ProxiedServices => Container.ResolveAll<T>().Where(c => c != this).ToList();
 
         protected IWindsorContainer Container { get; }
 

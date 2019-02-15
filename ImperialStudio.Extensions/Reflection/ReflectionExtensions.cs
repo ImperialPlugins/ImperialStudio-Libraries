@@ -78,7 +78,7 @@ namespace ImperialStudio.Extensions.Reflection
             return target?.GetMethod();
         }
 
-        public static IEnumerable<Type> GetTypeHierarchy(this Type type)
+        public static IReadOnlyCollection<Type> GetTypeHierarchy(this Type type)
         {
             List<Type> types = new List<Type> { type };
             while ((type = type.BaseType) != null)

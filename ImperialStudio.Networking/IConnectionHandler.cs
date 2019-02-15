@@ -12,8 +12,8 @@ namespace ImperialStudio.Networking
         void Send(OutgoingPacket outgoingPacket);
         void Flush();
 
-        IEnumerable<INetworkPeer> GetPeers(bool authenticatedOnly = true);
-        IEnumerable<INetworkPeer> GetPendingPeers();
+        IReadOnlyCollection<INetworkPeer> GetPeers(bool authenticatedOnly = true);
+        IReadOnlyCollection<INetworkPeer> GetPendingPeers();
 
         void RegisterPeer(INetworkPeer networkPeer);
         void UnregisterPeer(INetworkPeer networkPeer);

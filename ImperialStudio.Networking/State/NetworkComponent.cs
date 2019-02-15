@@ -11,7 +11,7 @@ namespace ImperialStudio.Networking.State
     public class NetworkComponent : INetworkComponent
     {
         private readonly IObjectSerializer m_Serializer;
-        private static readonly Dictionary<Type, IEnumerable<SyncVariable>> s_CachedStates = new Dictionary<Type, IEnumerable<SyncVariable>>();
+        private static readonly Dictionary<Type, IReadOnlyCollection<SyncVariable>> s_CachedStates = new Dictionary<Type, IReadOnlyCollection<SyncVariable>>();
 
         public NetworkComponent(IObjectSerializer serializer)
         {

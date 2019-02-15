@@ -15,7 +15,7 @@ namespace ImperialStudio.Core.UnityEngine.Scheduling
 {
     public class UnityTaskScheduler : MonoBehaviour, ITaskScheduler
     {
-        public IEnumerable<ITask> Tasks => m_Tasks.AsReadOnly();
+        public IReadOnlyCollection<ITask> Tasks => m_Tasks;
 
         private static volatile int m_NextTaskId;
 

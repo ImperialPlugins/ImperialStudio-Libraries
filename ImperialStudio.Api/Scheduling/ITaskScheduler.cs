@@ -11,7 +11,7 @@ namespace ImperialStudio.Api.Scheduling
         /// <summary>
         ///     The current scheduled and ongoing tasks. Does not include finished and cancelled tasks.
         /// </summary>
-        IEnumerable<ITask> Tasks { get; }
+        IReadOnlyCollection<ITask> Tasks { get; }
 
         /// <summary>
         ///     Schedules an action.
