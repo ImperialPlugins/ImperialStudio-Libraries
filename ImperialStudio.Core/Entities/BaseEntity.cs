@@ -24,13 +24,41 @@ namespace ImperialStudio.Core.Entities
             }
             set
             {
+                OnEntityIdChange(m_Id);
+
                 ComponentId = m_Id;
                 m_Id = value;
             }
         }
 
+        protected virtual void OnEntityIdChange(int newEntityId)
+        {
+            
+        }
+
+        private string m_Name;
         [NetworkVariable]
-        public abstract string Name { get; set; }
+        public string Name {
+            get
+            {
+                return m_Name;
+            }
+            set
+            {
+                if (m_Name == value)
+                {
+                    return;
+                }
+
+                OnEntityNameChange(m_Name);
+                m_Name = value;
+            }
+        }
+
+        protected virtual void OnEntityNameChange(string newName)
+        {
+
+        }
 
         private uint? m_OwnerId;
         public uint? OwnerId
@@ -104,7 +132,27 @@ namespace ImperialStudio.Core.Entities
             IsDisposed = true;
         }
 
-        public bool IsOwner { get; set; }
+        private bool m_IsOwner;
+        public bool IsOwner
+        {
+            get
+            {
+                return m_IsOwner;
+            }
+            set
+            {
+                if (value == m_IsOwner)
+                    return;
+
+                OnOwnerStatusChange(value);
+                m_IsOwner = value;
+            }
+        }
+
+        protected virtual void OnOwnerStatusChange(bool isOwner)
+        {
+            
+        }
 
         protected abstract void OnDispose();
 
