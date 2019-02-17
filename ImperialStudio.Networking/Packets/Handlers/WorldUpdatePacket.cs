@@ -37,8 +37,5 @@ namespace ImperialStudio.Networking.Packets.Handlers
 
         [Key(1)]
         public virtual string Type { get; set; }
-
-        [Key(2)]
-        public virtual bool IsOwner { get; set; }
     }
 }

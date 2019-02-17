@@ -15,7 +15,7 @@ namespace ImperialStudio.Networking.Packets.Handlers
         private readonly IMapManager m_MapManager;
         private readonly IConnectionHandler m_ConnectionHandler;
 
-        public MapChangeHandler(ITaskScheduler taskScheduler, IEventBus eventBus, IMapManager mapManager, IObjectSerializer packetSerializer, IGamePlatformAccessor gamePlatformAccessor, IConnectionHandler connectionHandler, ILogger logger) : base(packetSerializer, gamePlatformAccessor, connectionHandler, logger)
+        public MapChangeHandler(ITaskScheduler taskScheduler, IEventBus eventBus, IMapManager mapManager, IObjectSerializer objectSerializer, IGamePlatformAccessor gamePlatformAccessor, IConnectionHandler connectionHandler, ILogger logger) : base(objectSerializer, gamePlatformAccessor, connectionHandler, logger)
         {
             m_TaskScheduler = taskScheduler;
             m_MapManager = mapManager;

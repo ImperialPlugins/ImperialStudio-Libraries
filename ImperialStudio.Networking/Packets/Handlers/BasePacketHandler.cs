@@ -17,7 +17,7 @@ namespace ImperialStudio.Networking.Packets.Handlers
 
             try
             {
-                deserialized = PacketSerializer.Deserialize<T>(incomingPacket.Data);
+                deserialized = ObjectSerializer.Deserialize<T>(incomingPacket.Data);
             }
             catch (Exception ex)
             {
@@ -29,11 +29,11 @@ namespace ImperialStudio.Networking.Packets.Handlers
         }
 
         protected BasePacketHandler(
-            IObjectSerializer packetSerializer,
+            IObjectSerializer objectSerializer,
             IGamePlatformAccessor gamePlatformAccessor,
             IConnectionHandler connectionHandler,
             ILogger logger)
-            : base(packetSerializer,
+            : base(objectSerializer,
                 gamePlatformAccessor,
                 connectionHandler,
                 logger)
@@ -45,18 +45,18 @@ namespace ImperialStudio.Networking.Packets.Handlers
 
     public abstract class BasePacketHandler : IPacketHandler
     {
-        protected IObjectSerializer PacketSerializer { get; }
+        protected IObjectSerializer ObjectSerializer { get; }
         public byte PacketId { get; }
 
         private readonly IGamePlatformAccessor m_GamePlatformAccessor;
         private readonly IConnectionHandler m_ConnectionHandler;
         private readonly ILogger m_Logger;
 
-        protected BasePacketHandler(IObjectSerializer packetSerializer, IGamePlatformAccessor gamePlatformAccessor,
+        protected BasePacketHandler(IObjectSerializer objectSerializer, IGamePlatformAccessor gamePlatformAccessor,
             IConnectionHandler connectionHandler,
             ILogger logger)
         {
-            PacketSerializer = packetSerializer;
+            ObjectSerializer = objectSerializer;
             PacketId = ((PacketTypeAttribute[])GetType().GetCustomAttributes(typeof(PacketTypeAttribute), false)).First().PacketId;
             m_GamePlatformAccessor = gamePlatformAccessor;
             m_ConnectionHandler = connectionHandler;

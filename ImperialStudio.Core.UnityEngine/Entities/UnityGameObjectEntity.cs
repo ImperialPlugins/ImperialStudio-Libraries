@@ -3,9 +3,10 @@ using ImperialStudio.Api.Serialization;
 using ImperialStudio.Core.Entities;
 using ImperialStudio.Core.UnityEngine.Math;
 using ImperialStudio.Networking;
+using ImperialStudio.Networking.Components;
 using ImperialStudio.Networking.State;
 using UnityEngine;
-using SVector3 = ImperialStudio.Core.Math.SVector3;
+using SVector3 = ImperialStudio.Api.Serialization.SVector3;
 using Vector3 = System.Numerics.Vector3;
 
 namespace ImperialStudio.Core.UnityEngine.Entities
@@ -14,7 +15,7 @@ namespace ImperialStudio.Core.UnityEngine.Entities
     {
         public abstract GameObject GameObject { get; }
 
-        [NetworkState]
+        [NetworkVariable]
         private SVector3? SyncRotation
         {
             get
@@ -35,7 +36,7 @@ namespace ImperialStudio.Core.UnityEngine.Entities
             }
         }
 
-        [NetworkState]
+        [NetworkVariable]
         private SVector3? SyncPosition
         {
             get
@@ -67,7 +68,7 @@ namespace ImperialStudio.Core.UnityEngine.Entities
             set => GameObject.transform.rotation = Quaternion.Euler(value.ToUnityVector());
         }
 
-        protected UnityGameObjectEntity(IObjectSerializer serializer, IConnectionHandler connectionHandler) : base(serializer, connectionHandler)
+        protected UnityGameObjectEntity(IObjectSerializer serializer, IConnectionHandler connectionHandler, INetworkComponentManager networkComponentManager) : base(serializer, connectionHandler, networkComponentManager)
         {
 
         }

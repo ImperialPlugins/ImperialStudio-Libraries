@@ -22,12 +22,12 @@ namespace ImperialStudio.Networking.Packets.Handlers
 
         public WorldUpdateHandler(
             IEntityManager entityManager,
-            IObjectSerializer packetSerializer,
+            IObjectSerializer objectSerializer,
             IGamePlatformAccessor gamePlatformAccessor,
             IConnectionHandler connectionHandler,
             IEventBus eventBus,
             ITaskScheduler taskScheduler,
-            ILogger logger) : base(packetSerializer, gamePlatformAccessor, connectionHandler, logger)
+            ILogger logger) : base(objectSerializer, gamePlatformAccessor, connectionHandler, logger)
         {
             m_EntityManager = entityManager;
             m_TaskScheduler = taskScheduler;

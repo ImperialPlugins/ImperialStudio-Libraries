@@ -15,12 +15,12 @@ namespace ImperialStudio.Networking.Packets.Handlers
         private readonly ITaskScheduler m_TaskScheduler;
 
         public InputUpdateHandler(
-            IObjectSerializer packetSerializer,
+            IObjectSerializer objectSerializer,
             IGamePlatformAccessor gamePlatformAccessor,
             IConnectionHandler connectionHandler,
             IEntityManager entityManager,
             ITaskScheduler taskScheduler,
-            ILogger logger) : base(packetSerializer, gamePlatformAccessor, connectionHandler, logger)
+            ILogger logger) : base(objectSerializer, gamePlatformAccessor, connectionHandler, logger)
         {
             m_EntityManager = entityManager;
             m_TaskScheduler = taskScheduler;

@@ -39,6 +39,7 @@ namespace ImperialStudio.Networking
             RegisterPacketHandler<TerminateHandler>();
             RegisterPacketHandler<WorldUpdateHandler>();
             RegisterPacketHandler<InputUpdateHandler>();
+            RegisterPacketHandler<RpcHandler>();
 
             m_Inited = true;
         }

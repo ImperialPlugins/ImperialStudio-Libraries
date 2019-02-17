@@ -1,6 +1,6 @@
 ﻿using ImperialStudio.Api.Networking;
 
-namespace ImperialStudio.Networking
+namespace ImperialStudio.Networking.Packets
 {
     public class IncomingPacket
     {

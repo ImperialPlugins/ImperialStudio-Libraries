@@ -9,6 +9,7 @@
         MapChange,
         WorldUpdate,
         InputUpdate,
-        Terminate
+        Terminate,
+        Rpc
     }
 }

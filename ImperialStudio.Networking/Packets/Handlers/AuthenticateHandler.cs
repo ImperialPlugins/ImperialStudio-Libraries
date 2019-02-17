@@ -25,12 +25,12 @@ namespace ImperialStudio.Networking.Packets.Handlers
         private readonly IEventBus m_EventBus;
 
         public AuthenticateHandler(
-            IObjectSerializer packetSerializer,
+            IObjectSerializer objectSerializer,
             IGamePlatformAccessor gamePlatformAccessor,
             IConnectionHandler connectionHandler,
             IEventBus eventBus,
             IMapManager mapManager,
-            ILogger logger) : base(packetSerializer, gamePlatformAccessor, connectionHandler, logger)
+            ILogger logger) : base(objectSerializer, gamePlatformAccessor, connectionHandler, logger)
         {
             m_EventBus = eventBus;
             m_ServerConnectionHandler = connectionHandler as ServerConnectionHandler;
@@ -74,7 +74,8 @@ namespace ImperialStudio.Networking.Packets.Handlers
 
             m_ServerConnectionHandler.Send(new OutgoingPacket
             {
-                PacketId = (byte) Packets.PacketType.Authenticated,
+                PacketId = (byte) PacketType.Authenticated,
+                PacketDescription = m_ServerConnectionHandler.GetPacketDescription((byte)PacketType.Authenticated),
                 Data = new byte[0],
                 Peers = new[] { peer }
             });

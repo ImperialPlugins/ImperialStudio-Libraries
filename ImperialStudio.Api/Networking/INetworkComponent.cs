@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
 
 namespace ImperialStudio.Api.Networking
 {
@@ -8,5 +9,9 @@ namespace ImperialStudio.Api.Networking
         void Read(Span<byte> newState);
 
         void Write(Stream stream);
+
+        MethodInfo GetRcpMethod(byte index);
+
+        MethodInfo GetRcpMethod(string name);
     }
 }

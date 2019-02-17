@@ -3,7 +3,7 @@
 namespace ImperialStudio.Networking.State
 {
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-    public class NetworkStateAttribute : Attribute
+    public class NetworkVariableAttribute : Attribute
     {
     }
 }

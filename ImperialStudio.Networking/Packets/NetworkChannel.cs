@@ -7,5 +7,6 @@
         World,
         Input,
         Chat,
+        Rpc
     }
 }

@@ -7,7 +7,15 @@ namespace ImperialStudio.Core.Serialization
 {
     public class MessagePackSerializer : IObjectSerializer
     {
-        private static readonly MethodInfo m_DeserializeMethod = typeof(MessagePackSerializer).GetMethod("Deserialize", BindingFlags.Static | BindingFlags.Public);
+        private static readonly MethodInfo m_DeserializeMethodBytes = 
+            typeof(MessagePack.MessagePackSerializer)
+                .GetMethods(BindingFlags.Static | BindingFlags.Public)
+                .First(d => d.Name == "Deserialize" && d.GetParameters().FirstOrDefault()?.ParameterType == typeof(byte[]));
+
+        private static readonly MethodInfo m_DeserializeMethodArraySegment = 
+            typeof(MessagePack.MessagePackSerializer)
+                .GetMethods(BindingFlags.Static | BindingFlags.Public)
+                .First(d => d.Name == "Deserialize" && d.GetParameters().FirstOrDefault()?.ParameterType == typeof(ArraySegment<byte>));
 
         public byte[] Serialize<T>(T packet) where T : class
         {
@@ -24,9 +32,20 @@ namespace ImperialStudio.Core.Serialization
             return MessagePack.MessagePackSerializer.Deserialize<T>(data);
         }
 
+        public T Deserialize<T>(ArraySegment<byte> data) where T : class, new()
+        {
+            return MessagePack.MessagePackSerializer.Deserialize<T>(data);
+        }
+
         public object Deserialize(byte[] data, Type type)
         {
-            var genericDeserialize = m_DeserializeMethod.MakeGenericMethod(type);
+            var genericDeserialize = m_DeserializeMethodBytes.MakeGenericMethod(type);
+            return genericDeserialize.Invoke(null, new object[] { data });
+        }
+
+        public object Deserialize(ArraySegment<byte> data, Type type)
+        {
+            var genericDeserialize = m_DeserializeMethodArraySegment.MakeGenericMethod(type);
             return genericDeserialize.Invoke(null, new object[] { data });
         }
     }

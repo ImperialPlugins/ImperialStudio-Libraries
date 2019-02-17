@@ -11,7 +11,7 @@ namespace ImperialStudio.Networking.Packets.Handlers
     {
         private readonly IEventBus m_EventBus;
 
-        public PongHandler(IEventBus eventBus, IObjectSerializer packetSerializer, IGamePlatformAccessor gamePlatformAccessor, IConnectionHandler connectionHandler, ILogger logger) : base(packetSerializer, gamePlatformAccessor, connectionHandler, logger)
+        public PongHandler(IEventBus eventBus, IObjectSerializer objectSerializer, IGamePlatformAccessor gamePlatformAccessor, IConnectionHandler connectionHandler, ILogger logger) : base(objectSerializer, gamePlatformAccessor, connectionHandler, logger)
         {
             m_EventBus = eventBus;
         }

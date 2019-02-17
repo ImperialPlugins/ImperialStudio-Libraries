@@ -116,6 +116,13 @@ namespace ImperialStudio.Networking
                 channel: (byte)NetworkChannel.Input,
                 packetFlags: PacketFlags.Reliable)
             );
+
+            RegisterPacket((byte)PacketType.Rpc, new PacketDescription(
+                name: nameof(PacketType.Rpc),
+                direction: PacketDirection.Any,
+                channel: (byte)NetworkChannel.Rpc,
+                packetFlags: PacketFlags.Reliable)
+            );
         }
 
         public void Send<T>(INetworkPeer peer, T packet) where T : class, IPacket
@@ -125,13 +132,15 @@ namespace ImperialStudio.Networking
 
         public void Send<T>(INetworkPeer peer, T packet, byte packetId) where T : class, IPacket
         {
+            var packetDescription = GetPacketDescription(packetId);
             byte[] data = m_PacketSerializer.Serialize(packet);
 
             Send(new OutgoingPacket
             {
                 Data = data,
                 PacketId = packetId,
-                Peers = new[] { peer }
+                Peers = new[] { peer },
+                PacketDescription = packetDescription
             });
         }
 
@@ -214,8 +223,7 @@ namespace ImperialStudio.Networking
 
         private void HandleOutgoingPacket(OutgoingPacket outgoingPacket)
         {
-            var packetDescription = GetPacketDescription(outgoingPacket.PacketId);
-
+            var packetDescription = outgoingPacket.PacketDescription;
 #if LOG_NETWORK
             m_Logger.LogDebug($"[Network] > {packetDescription.Name}");
 #endif

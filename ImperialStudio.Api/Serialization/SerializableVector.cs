@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
 using MessagePack;
 
-namespace ImperialStudio.Core.Math
+namespace ImperialStudio.Api.Serialization
 {
     [MessagePackObject]
     public struct SVector3

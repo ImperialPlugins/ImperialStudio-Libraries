@@ -11,7 +11,7 @@ namespace ImperialStudio.Networking.Packets.Handlers
     {
         private readonly IConnectionHandler m_ConnectionHandler;
 
-        public TerminateHandler(IObjectSerializer packetSerializer, IGamePlatformAccessor gamePlatformAccessor, IConnectionHandler connectionHandler, ILogger logger) : base(packetSerializer, gamePlatformAccessor, connectionHandler, logger)
+        public TerminateHandler(IObjectSerializer objectSerializer, IGamePlatformAccessor gamePlatformAccessor, IConnectionHandler connectionHandler, ILogger logger) : base(objectSerializer, gamePlatformAccessor, connectionHandler, logger)
         {
             m_ConnectionHandler = connectionHandler;
         }

@@ -1,4 +1,5 @@
-﻿using MessagePack;
+﻿using ImperialStudio.Api.Serialization;
+using MessagePack;
 
 namespace ImperialStudio.Networking.Packets.Handlers
 {
