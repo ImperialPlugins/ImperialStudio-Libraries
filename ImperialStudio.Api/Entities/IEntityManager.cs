@@ -7,7 +7,7 @@ namespace ImperialStudio.Api.Entities
 {
     public interface IEntityManager
     {
-        void Spawn(int id, Type type, bool isOwner, Action<IEntity> callback = null);
+        void Spawn(int id, Type type, Action<IEntity> callback = null);
 
         void Spawn<TEntity>(INetworkPeer owner, Action<TEntity> callback = null) where TEntity : class, IEntity;
 

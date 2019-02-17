@@ -88,7 +88,7 @@ namespace ImperialStudio.Core.Entities
             }
         }
 
-        public void Spawn(int id, Type type, bool isOwner, Action<IEntity> callback = null)
+        public void Spawn(int id, Type type, Action<IEntity> callback = null)
         {
             lock (m_SpawnedEntities)
             {
@@ -109,7 +109,6 @@ namespace ImperialStudio.Core.Entities
             {
                 var entityInstance = (IEntity)m_Container.Activate(type);
                 entityInstance.Id = id;
-                entityInstance.IsOwner = isOwner;
                 entityInstance.Init();
 
                 lock (m_SpawnedEntities)

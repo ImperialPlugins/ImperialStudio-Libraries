@@ -58,7 +58,7 @@ namespace ImperialStudio.Networking.Packets.Handlers
                     continue;
                 }
 
-                m_TaskScheduler.RunOnMainThread(this, () => m_EntityManager.Spawn(spawn.Id, spawnType, spawn.IsOwner), "EntitySpawn[" + spawnType.Name + "]@" + spawn.Id);
+                m_TaskScheduler.RunOnMainThread(this, () => m_EntityManager.Spawn(spawn.Id, spawnType), "EntitySpawn[" + spawnType.Name + "]@" + spawn.Id);
             }
 
             m_TaskScheduler.RunOnMainThread(this, () =>
