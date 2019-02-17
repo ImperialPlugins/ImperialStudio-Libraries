@@ -72,5 +72,13 @@ namespace ImperialStudio.Core.UnityEngine.Entities
         {
 
         }
+
+        protected override void OnDispose()
+        {
+            if (GameObject != null)
+            {
+                Object.Destroy(GameObject);
+            }
+        }
     }
 }
